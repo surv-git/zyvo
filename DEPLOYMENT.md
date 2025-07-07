@@ -11,72 +11,33 @@ This repository contains a complete Podman Compose setup for deploying a microse
 ## Prerequisites
 
 1. **Podman and Podman Compose** installed on your system
-2. **Local Podman images** built for your services:
-   - `localhost/zyvo-service1:latest`
-   - `localhost/zyvo-service2:latest`
-   - `localhost/zyvo-service3:latest`
-   - `localhost/zyvo-service4:latest`
+2. **Test Setup**: Uses nginx:alpine containers with custom HTML content (no custom images needed)
 
 ## Quick Start
 
-### 1. Configure Your Domain and Email
-
-Before starting, update the following in the configuration files:
+### 1. Configure Your IP Address and Passwords
 
 **In `podman-compose.yml`:**
-- Replace `your-email@domain.com` with your actual email
-- Replace `your-domain.com` with your actual domain
+- The configuration is set for IP address: `44.247.215.244`
 - Update passwords:
   - `your-redis-password`
   - `your-mongo-password`
 
 **In `nginx/conf.d/default.conf`:**
-- Replace `your-domain.com` with your actual domain
+- Configured for IP address: `44.247.215.244`
 
-### 2. Build Your Service Images (Example for testing)
+**Note:** SSL/HTTPS is disabled for IP-based deployment since Let's Encrypt doesn't issue certificates for IP addresses. The setup uses HTTP on port 80.
 
-For testing, you can create simple web service images:
+### 2. Ready to Deploy
 
-```bash
-# Create a simple test service
-mkdir -p test-service
-cat > test-service/Dockerfile << EOF
-FROM node:18-alpine
-WORKDIR /app
-RUN npm init -y && npm install express
-COPY server.js .
-EXPOSE 3000
-CMD ["node", "server.js"]
-EOF
+The setup now uses simple nginx:alpine containers with pre-built HTML content for testing. No custom image building required!
 
-cat > test-service/server.js << EOF
-const express = require('express');
-const app = express();
-const PORT = process.env.PORT || 3000;
-const SERVICE_NAME = process.env.SERVICE_NAME || 'unknown';
-
-app.get('/', (req, res) => {
-    res.json({ 
-        service: SERVICE_NAME, 
-        status: 'running',
-        timestamp: new Date().toISOString()
-    });
-});
-
-app.get('/health', (req, res) => {
-    res.status(200).send('OK');
-});
-
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(\`\${SERVICE_NAME} running on port \${PORT}\`);
-});
-EOF
-
-# Build images for all services
-for i in {1..4}; do
-    podman build -t localhost/zyvo-service$i:latest test-service/
-done
-```
+Each service has its own colorful landing page located in:
+- `./test-content/main/` - Main landing page with service overview
+- `./test-content/service1/` - Service 1 content
+- `./test-content/service2/` - Service 2 content  
+- `./test-content/service3/` - Service 3 content
+- `./test-content/service4/` - Service 4 content
 
 ### 3. Start the Cluster
 
@@ -93,21 +54,25 @@ podman-compose logs -f
 
 ### 4. Access Your Services
 
-- **Main application**: `https://your-domain.com`
+- **Main application**: `http://44.247.215.244`
 - **Individual services**:
-  - Service 1: `https://your-domain.com/api/service1/`
-  - Service 2: `https://your-domain.com/api/service2/`
-  - Service 3: `https://your-domain.com/api/service3/`
-  - Service 4: `https://your-domain.com/api/service4/`
-- **Health check**: `https://your-domain.com/health`
+  - Service 1: `http://44.247.215.244/api/service1/`
+  - Service 2: `http://44.247.215.244/api/service2/`
+  - Service 3: `http://44.247.215.244/api/service3/`
+  - Service 4: `http://44.247.215.244/api/service4/`
+- **Health check**: `http://44.247.215.244/health`
 
-### 5. SSL Certificate Setup
+**Note:** Services are accessible via HTTP (port 80) since SSL certificates are not available for IP addresses.
 
-The Let's Encrypt certificate will be automatically requested on first run. Make sure:
+### 5. SSL Certificate Setup (Not Available for IP Deployment)
 
-1. Your domain points to your server's IP address
-2. Ports 80 and 443 are accessible from the internet
-3. You've updated the email and domain in the configuration
+**Important:** Let's Encrypt does not issue SSL certificates for IP addresses. This deployment uses HTTP only.
+
+If you want SSL/HTTPS in the future:
+1. Obtain a domain name and point it to your server IP (44.247.215.244)
+2. Update the configuration files to use your domain instead of the IP
+3. Uncomment the HTTPS server block in `nginx/conf.d/default.conf`
+4. Update the certbot service in `podman-compose.yml`
 
 ## Management Commands
 
@@ -179,8 +144,8 @@ Check service health:
 podman-compose ps
 
 # Individual service health
-curl https://your-domain.com/health
-curl https://your-domain.com/api/service1/
+curl http://44.247.215.244/health
+curl http://44.247.215.244/api/service1/
 ```
 
 ## Updating Services

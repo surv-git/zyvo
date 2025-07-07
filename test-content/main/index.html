@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zyvo Microservices Cluster</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            color: white;
+        }
+        .header {
+            text-align: center;
+            padding: 2rem 0;
+        }
+        h1 {
+            font-size: 3rem;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .subtitle {
+            font-size: 1.2rem;
+            margin-top: 0.5rem;
+            opacity: 0.9;
+        }
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .service-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .service-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .service-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        .service-status {
+            background: #4CAF50;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: inline-block;
+            margin: 0.5rem 0;
+        }
+        .service-url {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            word-break: break-all;
+        }
+        .infrastructure {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(0,0,0,0.2);
+            margin-top: 2rem;
+        }
+        .infra-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            max-width: 800px;
+            margin: 1rem auto 0;
+        }
+        .infra-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        .timestamp {
+            text-align: center;
+            margin-top: 2rem;
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 Zyvo Microservices Cluster</h1>
+        <div class="subtitle">Load-balanced services with Nginx, Redis, and MongoDB</div>
+    </div>
+
+    <div class="services-grid">
+        <div class="service-card" onclick="window.open('/api/service1/', '_blank')">
+            <div class="service-icon">🚀</div>
+            <div class="service-name">Service 1</div>
+            <div class="service-status">✅ Running</div>
+            <div class="service-url">http://44.247.215.244/api/service1/</div>
+        </div>
+
+        <div class="service-card" onclick="window.open('/api/service2/', '_blank')">
+            <div class="service-icon">⚡</div>
+            <div class="service-name">Service 2</div>
+            <div class="service-status">✅ Running</div>
+            <div class="service-url">http://44.247.215.244/api/service2/</div>
+        </div>
+
+        <div class="service-card" onclick="window.open('/api/service3/', '_blank')">
+            <div class="service-icon">🔧</div>
+            <div class="service-name">Service 3</div>
+            <div class="service-status">✅ Running</div>
+            <div class="service-url">http://44.247.215.244/api/service3/</div>
+        </div>
+
+        <div class="service-card" onclick="window.open('/api/service4/', '_blank')">
+            <div class="service-icon">🌟</div>
+            <div class="service-name">Service 4</div>
+            <div class="service-status">✅ Running</div>
+            <div class="service-url">http://44.247.215.244/api/service4/</div>
+        </div>
+    </div>
+
+    <div class="infrastructure">
+        <h2>🏗️ Infrastructure Components</h2>
+        <div class="infra-grid">
+            <div class="infra-item">
+                <strong>🌐 Nginx</strong><br>
+                Load Balancer & Reverse Proxy
+            </div>
+            <div class="infra-item">
+                <strong>📦 Redis</strong><br>
+                Caching & Session Store
+            </div>
+            <div class="infra-item">
+                <strong>🗄️ MongoDB</strong><br>
+                Primary Database
+            </div>
+            <div class="infra-item">
+                <strong>🔒 SSL Ready</strong><br>
+                Let's Encrypt Integration
+            </div>
+        </div>
+    </div>
+
+    <div class="timestamp">
+        <p>Cluster Status: <strong>Operational</strong></p>
+        <p>Last Updated: <span id="timestamp"></span></p>
+        <p>Health Check: <a href="/health" style="color: #4CAF50;">/health</a></p>
+    </div>
+
+    <script>
+        document.getElementById('timestamp').textContent = new Date().toLocaleString();
+        
+        // Auto-refresh timestamp every 30 seconds
+        setInterval(() => {
+            document.getElementById('timestamp').textContent = new Date().toLocaleString();
+        }, 30000);
+    </script>
+</body>
+</html>

@@ -14,22 +14,28 @@ services:
       - ./certbot/conf:/etc/letsencrypt:ro
       - ./certbot/www:/var/www/certbot:ro
     depends_on:
+      - main
       - service1
       - service2
       - service3
       - service4
+      - main
     restart: unless-stopped
     networks:
       - zyvo-network
 
   # Let's Encrypt Certbot for SSL certificates
+  # Note: Let's Encrypt doesn't issue certificates for IP addresses
+  # This service is disabled when using IP addresses
   certbot:
     image: certbot/certbot
     container_name: zyvo-certbot
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
-    command: certonly --webroot --webroot-path=/var/www/certbot --email your-email@domain.com --agree-tos --no-eff-email -d your-domain.com
+    # Disabled for IP-based deployment - Let's Encrypt doesn't support IP addresses
+    # command: certonly --webroot --webroot-path=/var/www/certbot --email your-email@domain.com --agree-tos --no-eff-email -d 44.247.215.244
+    command: /bin/sh -c "echo 'Certbot disabled for IP-based deployment' && sleep infinity"
     networks:
       - zyvo-network
 
@@ -63,98 +69,87 @@ services:
     networks:
       - zyvo-network
 
-  # Service 1 - Web application
+  # Main landing page service
+  main:
+    image: nginx:alpine
+    container_name: zyvo-main
+    ports:
+      - "3000:80"
+    volumes:
+      - ./test-content/main:/usr/share/nginx/html:ro
+    restart: unless-stopped
+    networks:
+      - zyvo-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Service 1 - Simple web server for testing
   service1:
-    image: localhost/zyvo-service1:latest
+    image: nginx:alpine
     container_name: zyvo-service1
     ports:
-      - "3001:3000"
-    environment:
-      - NODE_ENV=production
-      - REDIS_URL=redis://redis:6379
-      - MONGODB_URL=mongodb://admin:your-mongo-password@mongodb:27017/zyvo?authSource=admin
-      - SERVICE_NAME=service1
-      - PORT=3000
-    depends_on:
-      - redis
-      - mongodb
+      - "3001:80"
+    volumes:
+      - ./test-content/service1:/usr/share/nginx/html:ro
     restart: unless-stopped
     networks:
       - zyvo-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
       interval: 30s
       timeout: 10s
       retries: 3
 
-  # Service 2 - Web application
+  # Service 2 - Simple web server for testing
   service2:
-    image: localhost/zyvo-service2:latest
+    image: nginx:alpine
     container_name: zyvo-service2
     ports:
-      - "3002:3000"
-    environment:
-      - NODE_ENV=production
-      - REDIS_URL=redis://redis:6379
-      - MONGODB_URL=mongodb://admin:your-mongo-password@mongodb:27017/zyvo?authSource=admin
-      - SERVICE_NAME=service2
-      - PORT=3000
-    depends_on:
-      - redis
-      - mongodb
+      - "3002:80"
+    volumes:
+      - ./test-content/service2:/usr/share/nginx/html:ro
     restart: unless-stopped
     networks:
       - zyvo-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
       interval: 30s
       timeout: 10s
       retries: 3
 
-  # Service 3 - Web application
+  # Service 3 - Simple web server for testing
   service3:
-    image: localhost/zyvo-service3:latest
+    image: nginx:alpine
     container_name: zyvo-service3
     ports:
-      - "3003:3000"
-    environment:
-      - NODE_ENV=production
-      - REDIS_URL=redis://redis:6379
-      - MONGODB_URL=mongodb://admin:your-mongo-password@mongodb:27017/zyvo?authSource=admin
-      - SERVICE_NAME=service3
-      - PORT=3000
-    depends_on:
-      - redis
-      - mongodb
+      - "3003:80"
+    volumes:
+      - ./test-content/service3:/usr/share/nginx/html:ro
     restart: unless-stopped
     networks:
       - zyvo-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
       interval: 30s
       timeout: 10s
       retries: 3
 
-  # Service 4 - Web application
+  # Service 4 - Simple web server for testing
   service4:
-    image: localhost/zyvo-service4:latest
+    image: nginx:alpine
     container_name: zyvo-service4
     ports:
-      - "3004:3000"
-    environment:
-      - NODE_ENV=production
-      - REDIS_URL=redis://redis:6379
-      - MONGODB_URL=mongodb://admin:your-mongo-password@mongodb:27017/zyvo?authSource=admin
-      - SERVICE_NAME=service4
-      - PORT=3000
-    depends_on:
-      - redis
-      - mongodb
+      - "3004:80"
+    volumes:
+      - ./test-content/service4:/usr/share/nginx/html:ro
     restart: unless-stopped
     networks:
       - zyvo-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
       interval: 30s
       timeout: 10s
       retries: 3
