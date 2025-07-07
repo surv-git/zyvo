@@ -1,0 +1,172 @@
+version: '3.8'
+
+# Alternative compose file for environments where ports 80/443 can't be used
+# This version uses ports 8080/8443 instead
+
+services:
+  # Nginx reverse proxy with SSL termination (using alternative ports)
+  nginx:
+    image: nginx:alpine
+    container_name: zyvo-nginx
+    ports:
+      - "8080:80"   # Changed from 80:80
+      - "8443:443"  # Changed from 443:443
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+    depends_on:
+      - main
+      - service1
+      - service2
+      - service3
+      - service4
+    restart: unless-stopped
+    networks:
+      - zyvo-network
+
+  # Let's Encrypt Certbot for SSL certificates
+  # Note: Let's Encrypt doesn't issue certificates for IP addresses
+  # This service is disabled when using IP addresses
+  certbot:
+    image: certbot/certbot
+    container_name: zyvo-certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    # Disabled for IP-based deployment - Let's Encrypt doesn't support IP addresses
+    # command: certonly --webroot --webroot-path=/var/www/certbot --email your-email@domain.com --agree-tos --no-eff-email -d 44.247.215.244
+    command: /bin/sh -c "echo 'Certbot disabled for IP-based deployment' && sleep infinity"
+    networks:
+      - zyvo-network
+
+  # Redis cache service
+  redis:
+    image: redis:7-alpine
+    container_name: zyvo-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --requirepass your-redis-password
+    restart: unless-stopped
+    networks:
+      - zyvo-network
+
+  # MongoDB database
+  mongodb:
+    image: mongo:7
+    container_name: zyvo-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: your-mongo-password
+      MONGO_INITDB_DATABASE: zyvo
+    volumes:
+      - mongodb-data:/data/db
+      - ./mongodb/init:/docker-entrypoint-initdb.d:ro
+    restart: unless-stopped
+    networks:
+      - zyvo-network
+
+  # Main landing page service
+  main:
+    image: nginx:alpine
+    container_name: zyvo-main
+    ports:
+      - "3000:80"
+    volumes:
+      - ./test-content/main:/usr/share/nginx/html:ro
+    restart: unless-stopped
+    networks:
+      - zyvo-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Service 1 - Simple web server for testing
+  service1:
+    image: nginx:alpine
+    container_name: zyvo-service1
+    ports:
+      - "3001:80"
+    volumes:
+      - ./test-content/service1:/usr/share/nginx/html:ro
+    restart: unless-stopped
+    networks:
+      - zyvo-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Service 2 - Simple web server for testing
+  service2:
+    image: nginx:alpine
+    container_name: zyvo-service2
+    ports:
+      - "3002:80"
+    volumes:
+      - ./test-content/service2:/usr/share/nginx/html:ro
+    restart: unless-stopped
+    networks:
+      - zyvo-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Service 3 - Simple web server for testing
+  service3:
+    image: nginx:alpine
+    container_name: zyvo-service3
+    ports:
+      - "3003:80"
+    volumes:
+      - ./test-content/service3:/usr/share/nginx/html:ro
+    restart: unless-stopped
+    networks:
+      - zyvo-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Service 4 - Simple web server for testing
+  service4:
+    image: nginx:alpine
+    container_name: zyvo-service4
+    ports:
+      - "3004:80"
+    volumes:
+      - ./test-content/service4:/usr/share/nginx/html:ro
+    restart: unless-stopped
+    networks:
+      - zyvo-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+# Named volumes for persistent data
+volumes:
+  redis-data:
+    driver: local
+  mongodb-data:
+    driver: local
+
+# Custom network for service communication
+networks:
+  zyvo-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
