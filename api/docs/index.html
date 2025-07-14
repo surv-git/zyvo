@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Zyvo API Documentation</title>
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui.css" />
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
+  <style>
+    html {
+      box-sizing: border-box;
+      overflow: -moz-scrollbars-vertical;
+      overflow-y: scroll;
+    }
+    
+    *, *:before, *:after {
+      box-sizing: inherit;
+    }
+
+    body {
+      margin:0;
+      background: #fafafa;
+      font-family: Roboto, sans-serif;
+    }
+
+    /* Custom styling to make Swagger UI look more like Redoc */
+    .swagger-ui .topbar {
+      background-color: #1f2937;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .swagger-ui .topbar .download-url-wrapper .select-label {
+      color: #ffffff;
+    }
+    
+    .swagger-ui .info {
+      margin: 50px 0;
+    }
+    
+    .swagger-ui .info .title {
+      font-family: Montserrat, sans-serif;
+      color: #1f2937;
+      font-size: 36px;
+    }
+    
+    .swagger-ui .scheme-container {
+      background: #ffffff;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    }
+    
+    .swagger-ui .opblock.opblock-get .opblock-summary-method {
+      background: #10b981;
+    }
+    
+    .swagger-ui .opblock.opblock-post .opblock-summary-method {
+      background: #3b82f6;
+    }
+    
+    .swagger-ui .opblock.opblock-put .opblock-summary-method {
+      background: #f59e0b;
+    }
+    
+    .swagger-ui .opblock.opblock-delete .opblock-summary-method {
+      background: #ef4444;
+    }
+    
+    .swagger-ui .btn.authorize {
+      background-color: #3b82f6;
+      border-color: #3b82f6;
+    }
+    
+    .swagger-ui .btn.execute {
+      background-color: #3b82f6;
+      border-color: #3b82f6;
+    }
+    
+    .swagger-ui .opblock .opblock-summary-path {
+      font-family: 'Courier New', monospace;
+      color: #1f2937;
+      font-weight: 600;
+    }
+    
+    .swagger-ui .model-box {
+      background: #f8fafc;
+    }
+    
+    .swagger-ui section.models {
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+    }
+    
+    .swagger-ui .parameter__name {
+      font-weight: 600;
+      color: #1f2937;
+    }
+    
+    .swagger-ui .parameter__type {
+      color: #6b7280;
+    }
+    
+    .swagger-ui .response-col_status {
+      font-family: 'Courier New', monospace;
+      font-weight: 600;
+    }
+    
+    .swagger-ui .opblock-tag {
+      font-family: Montserrat, sans-serif;
+      color: #1f2937;
+      border-bottom: 1px solid #e5e7eb;
+      margin: 20px 0;
+      padding-bottom: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="swagger-ui"></div>
+
+  <script src="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-bundle.js"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-standalone-preset.js"></script>
+  <script>
+    window.onload = function() {
+      const ui = SwaggerUIBundle({
+        url: './openapi.yaml',
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        plugins: [
+          SwaggerUIBundle.plugins.DownloadUrl
+        ],
+        layout: "StandaloneLayout",
+        tryItOutEnabled: true,
+        filter: true,
+        displayOperationId: false,
+        displayRequestDuration: true,
+        docExpansion: "none",
+        defaultModelsExpandDepth: 2,
+        defaultModelExpandDepth: 2,
+        showExtensions: true,
+        showCommonExtensions: true,
+        persistAuthorization: true
+      });
+    };
+  </script>
+</body>
+</html>
