@@ -7,6 +7,7 @@
 const express = require('express');
 const router = express.Router();
 const { body, query, param } = require('express-validator');
+const { authMiddleware } = require('../middleware/auth.middleware');
 const { adminAuthMiddleware } = require('../middleware/admin.middleware');
 const supplierContactNumberController = require('../controllers/supplierContactNumber.controller');
 
@@ -261,6 +262,8 @@ const contactNumberValidationRules = {
  *         description: Unauthorized - Admin access required
  */
 router.post('/', 
+  authMiddleware,
+  authMiddleware,
   adminAuthMiddleware, 
   contactNumberValidationRules.create, 
   supplierContactNumberController.createContactNumber
@@ -364,6 +367,8 @@ router.post('/',
  *         description: Unauthorized - Admin access required
  */
 router.get('/', 
+  authMiddleware,
+  authMiddleware,
   adminAuthMiddleware, 
   contactNumberValidationRules.query, 
   supplierContactNumberController.getAllContactNumbers
@@ -421,6 +426,8 @@ router.get('/',
  *         description: Supplier not found
  */
 router.get('/supplier/:supplierId', 
+  authMiddleware,
+  authMiddleware,
   adminAuthMiddleware, 
   contactNumberValidationRules.params, 
   supplierContactNumberController.getContactNumbersBySupplier
@@ -459,6 +466,7 @@ router.get('/supplier/:supplierId',
  *         description: Contact number not found
  */
 router.get('/:id', 
+  authMiddleware,
   adminAuthMiddleware, 
   contactNumberValidationRules.params, 
   supplierContactNumberController.getContactNumberById
@@ -507,6 +515,7 @@ router.get('/:id',
  *         description: Contact number not found
  */
 router.patch('/:id', 
+  authMiddleware,
   adminAuthMiddleware, 
   contactNumberValidationRules.params, 
   contactNumberValidationRules.update, 
@@ -548,6 +557,7 @@ router.patch('/:id',
  *         description: Contact number not found
  */
 router.patch('/:id/set-primary', 
+  authMiddleware,
   adminAuthMiddleware, 
   contactNumberValidationRules.params, 
   supplierContactNumberController.setPrimaryContactNumber
@@ -577,6 +587,7 @@ router.patch('/:id/set-primary',
  *         description: Contact number not found
  */
 router.delete('/:id', 
+  authMiddleware,
   adminAuthMiddleware, 
   contactNumberValidationRules.params, 
   supplierContactNumberController.deleteContactNumber

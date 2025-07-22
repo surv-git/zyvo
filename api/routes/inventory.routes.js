@@ -6,18 +6,31 @@
 
 const express = require('express');
 const { body, query, param } = require('express-validator');
+const { authMiddleware } = require('../middleware/auth.middleware');
 const { adminAuthMiddleware } = require('../middleware/admin.middleware');
 const {
   createInventory,
   getAllInventory,
   getInventoryByProductVariantId,
+  getInventoryById,
   updateInventory,
   deleteInventory
 } = require('../controllers/inventory.controller');
 
 const router = express.Router();
 
-// Apply admin authentication to all routes
+/**
+ * API documentation for inventory management routes
+ * 
+ * These routes handle inventory operations including:
+ * - Getting available stock for products
+ * - Updating stock levels manually (admin only)
+ * - Setting stock alerts/thresholds
+ * - Managing pack-based inventory
+ */
+
+// Apply authentication middleware first, then admin check
+router.use(authMiddleware);
 router.use(adminAuthMiddleware);
 
 /**
@@ -303,6 +316,52 @@ router.get('/variant/:productVariantId', [
     .isMongoId()
     .withMessage('Product variant ID must be a valid MongoDB ObjectId')
 ], getInventoryByProductVariantId);
+
+/**
+ * @swagger
+ * /api/v1/inventory/{id}:
+ *   get:
+ *     summary: Get inventory record by ID
+ *     tags: [Inventory]
+ *     security:
+ *       - adminAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Inventory record ID
+ *     responses:
+ *       200:
+ *         description: Inventory record retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Inventory record retrieved successfully
+ *                 data:
+ *                   $ref: '#/components/schemas/Inventory'
+ *       400:
+ *         description: Invalid inventory ID format
+ *       401:
+ *         description: Unauthorized - admin access required
+ *       404:
+ *         description: Inventory record not found
+ *       500:
+ *         description: Internal server error
+ */
+router.get('/:id', [
+  param('id')
+    .isMongoId()
+    .withMessage('Inventory ID must be a valid MongoDB ObjectId')
+], getInventoryById);
 
 /**
  * @swagger

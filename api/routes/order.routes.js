@@ -16,8 +16,7 @@ const {
   updateOrderStatus,
   processRefund
 } = require('../controllers/order.controller');
-const userAuthMiddleware = require('../middleware/userAuthMiddleware');
-const adminAuthMiddleware = require('../middleware/adminAuthMiddleware');
+const { authMiddleware, authorize } = require('../middleware/auth.middleware');
 const validationErrorHandler = require('../middleware/validationErrorHandler');
 
 const router = express.Router();
@@ -32,7 +31,7 @@ const router = express.Router();
  * @access  Private (User)
  */
 router.post('/', [
-  userAuthMiddleware,
+  authMiddleware,
   
   // Shipping address validation
   body('shipping_address.full_name')
@@ -140,7 +139,7 @@ router.post('/', [
  * @access  Private (User)
  */
 router.get('/', [
-  userAuthMiddleware,
+  authMiddleware,
   
   query('status')
     .optional()
@@ -180,7 +179,7 @@ router.get('/', [
  * @access  Private (User)
  */
 router.get('/:orderId', [
-  userAuthMiddleware,
+  authMiddleware,
   
   param('orderId')
     .isMongoId()
@@ -195,7 +194,7 @@ router.get('/:orderId', [
  * @access  Private (User)
  */
 router.patch('/:orderId/cancel', [
-  userAuthMiddleware,
+  authMiddleware,
   
   param('orderId')
     .isMongoId()
@@ -220,7 +219,8 @@ router.patch('/:orderId/cancel', [
  * @access  Private (Admin)
  */
 router.get('/admin/all', [
-  adminAuthMiddleware,
+  authMiddleware,
+  authorize('admin'),
   
   query('user_id')
     .optional()
@@ -276,7 +276,8 @@ router.get('/admin/all', [
  * @access  Private (Admin)
  */
 router.get('/admin/:orderId', [
-  adminAuthMiddleware,
+  authMiddleware,
+  authorize('admin'),
   
   param('orderId')
     .isMongoId()
@@ -291,7 +292,8 @@ router.get('/admin/:orderId', [
  * @access  Private (Admin)
  */
 router.patch('/admin/:orderId/status', [
-  adminAuthMiddleware,
+  authMiddleware,
+  authorize('admin'),
   
   param('orderId')
     .isMongoId()
@@ -330,7 +332,8 @@ router.patch('/admin/:orderId/status', [
  * @access  Private (Admin)
  */
 router.post('/admin/:orderId/refund', [
-  adminAuthMiddleware,
+  authMiddleware,
+  authorize('admin'),
   
   param('orderId')
     .isMongoId()

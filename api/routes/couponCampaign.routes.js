@@ -9,10 +9,11 @@ const { body, param, query } = require('express-validator');
 const router = express.Router();
 
 const couponCampaignController = require('../controllers/couponCampaign.controller');
-const adminAuthMiddleware = require('../middleware/adminAuth.middleware');
+const { authMiddleware, authorize } = require('../middleware/auth.middleware');
 
 // Apply admin authentication to all routes
-router.use(adminAuthMiddleware);
+router.use(authMiddleware);
+router.use(authorize('admin'));
 
 /**
  * Validation middleware for creating coupon campaigns

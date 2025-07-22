@@ -172,6 +172,115 @@ components:
             required: [supplier_id, contact_number]
             properties: {_id: {type: string, description: 'Unique identifier for the contact number'}, supplier_id: {type: string, description: 'Reference to the supplier'}, contact_number: {type: string, description: 'The actual phone number', minLength: 7, maxLength: 20}, contact_name: {type: string, description: 'Name of the person associated with this number', maxLength: 100}, type: {type: string, enum: [Mobile, Landline, Fax, Whatsapp, Toll-Free, Other], default: Mobile, description: 'Type of contact number'}, extension: {type: string, description: 'Phone extension if applicable', maxLength: 10}, is_primary: {type: boolean, default: false, description: 'Whether this is the primary contact number'}, notes: {type: string, description: 'Additional notes about this contact number', maxLength: 500}, is_active: {type: boolean, default: true, description: 'Whether the contact number is active'}, createdAt: {type: string, format: date-time, description: 'Creation timestamp'}, updatedAt: {type: string, format: date-time, description: 'Last update timestamp'}}
             example: {supplier_id: 60b5d5f5e8b5e5001f8b4567, contact_number: +1-555-123-4567, contact_name: 'John Doe', type: Mobile, extension: '123', is_primary: true, notes: 'Primary contact for urgent matters'}
+        Purchase:
+            type: object
+            required: [product_variant_id, supplier_id, quantity, unit_price_at_purchase, packaging_cost, shipping_cost, landing_price]
+            properties: 
+                _id: 
+                    type: string
+                    description: 'Unique identifier for the purchase'
+                    example: '60d0fe4f5311236168a109ca'
+                product_variant_id: 
+                    type: string
+                    description: 'Reference to the product variant being purchased'
+                    example: '60d0fe4f5311236168a109cb'
+                supplier_id: 
+                    type: string
+                    description: 'Reference to the supplier'
+                    example: '60d0fe4f5311236168a109cc'
+                purchase_order_number: 
+                    type: string
+                    description: 'Unique purchase order number'
+                    maxLength: 50
+                    example: 'PO-2025-001'
+                purchase_date: 
+                    type: string
+                    format: date-time
+                    description: 'Date when the purchase was made'
+                    example: '2025-07-20T10:30:00.000Z'
+                expected_delivery_date: 
+                    type: string
+                    format: date-time
+                    description: 'Expected delivery date'
+                    example: '2025-07-25T10:30:00.000Z'
+                received_date: 
+                    type: string
+                    format: date-time
+                    description: 'Date when the purchase was received'
+                    example: '2025-07-24T14:20:00.000Z'
+                quantity: 
+                    type: integer
+                    minimum: 1
+                    description: 'Quantity of items purchased'
+                    example: 50
+                unit_price_at_purchase: 
+                    type: number
+                    minimum: 0
+                    description: 'Unit price at time of purchase'
+                    example: 25.99
+                packaging_cost: 
+                    type: number
+                    minimum: 0
+                    description: 'Packaging cost for the purchase'
+                    example: 5.00
+                shipping_cost: 
+                    type: number
+                    minimum: 0
+                    description: 'Shipping cost for the purchase'
+                    example: 15.00
+                landing_price: 
+                    type: number
+                    minimum: 0
+                    description: 'Total landing price (unit_price * quantity + packaging + shipping)'
+                    example: 1319.50
+                status: 
+                    type: string
+                    enum: [Planned, Pending, Completed, Cancelled, 'Partially Received']
+                    default: Planned
+                    description: 'Current status of the purchase'
+                    example: 'Completed'
+                notes: 
+                    type: string
+                    maxLength: 1000
+                    description: 'Additional notes about the purchase'
+                    example: 'Bulk discount applied - 10% off total order'
+                inventory_updated_on_completion: 
+                    type: boolean
+                    default: false
+                    description: 'Whether inventory was updated when purchase completed'
+                    example: true
+                is_active: 
+                    type: boolean
+                    default: true
+                    description: 'Whether the purchase record is active'
+                    example: true
+                createdAt: 
+                    type: string
+                    format: date-time
+                    description: 'Creation timestamp'
+                    example: '2025-07-20T10:30:00.000Z'
+                updatedAt: 
+                    type: string
+                    format: date-time
+                    description: 'Last update timestamp'
+                    example: '2025-07-20T10:30:00.000Z'
+            example: 
+                _id: '60d0fe4f5311236168a109ca'
+                product_variant_id: '60d0fe4f5311236168a109cb'
+                supplier_id: '60d0fe4f5311236168a109cc'
+                purchase_order_number: 'PO-2025-001'
+                purchase_date: '2025-07-20T10:30:00.000Z'
+                expected_delivery_date: '2025-07-25T10:30:00.000Z'
+                received_date: '2025-07-24T14:20:00.000Z'
+                quantity: 50
+                unit_price_at_purchase: 25.99
+                packaging_cost: 5.00
+                shipping_cost: 15.00
+                landing_price: 1319.50
+                status: 'Completed'
+                notes: 'Bulk discount applied - 10% off total order'
+                inventory_updated_on_completion: true
+                is_active: true
         UserCreateRequest:
             type: object
             required: [name, email, password]
@@ -179,6 +288,212 @@ components:
         UserUpdateRequest:
             type: object
             properties: {name: {type: string}, email: {type: string, format: email}, phone: {type: string}, address: {type: string}, role: {type: string, enum: [user, admin], description: 'Only admin can update role'}, isActive: {type: boolean, description: 'Only admin can update active status'}}
+        BlogPost:
+            type: object
+            required: [author_id, title, content]
+            properties:
+                _id: {type: string, description: 'Unique identifier'}
+                author_id: {type: string, description: 'Reference to User who authored the post'}
+                title: {type: string, maxLength: 200, description: 'Blog post title'}
+                slug: {type: string, description: 'URL-friendly version of title'}
+                content: {type: string, description: 'Main blog post content'}
+                excerpt: {type: string, maxLength: 500, description: 'Short summary'}
+                featured_image_url: {type: string, description: 'URL of featured image'}
+                status: {type: string, enum: [draft, published, archived], default: draft}
+                visibility: {type: string, enum: [public, private, members_only], default: public}
+                tags: {type: array, items: {type: string}, description: 'Blog post tags'}
+                meta_title: {type: string, maxLength: 60, description: 'SEO meta title'}
+                meta_description: {type: string, maxLength: 160, description: 'SEO meta description'}
+                view_count: {type: integer, default: 0}
+                like_count: {type: integer, default: 0}
+                comment_count: {type: integer, default: 0}
+                published_at: {type: string, format: date-time}
+                is_featured: {type: boolean, default: false}
+                reading_time_minutes: {type: integer}
+                createdAt: {type: string, format: date-time}
+                updatedAt: {type: string, format: date-time}
+        Cart:
+            type: object
+            properties:
+                _id: {type: string, description: 'Unique identifier'}
+                user_id: {type: string, description: 'Reference to User'}
+                items: {type: array, items: {$ref: '#/components/schemas/CartItem'}}
+                total_amount: {type: number, description: 'Total cart value'}
+                total_items: {type: integer, description: 'Total number of items'}
+                is_active: {type: boolean, default: true}
+                expires_at: {type: string, format: date-time}
+                createdAt: {type: string, format: date-time}
+                updatedAt: {type: string, format: date-time}
+        CartItem:
+            type: object
+            required: [product_variant_id, quantity]
+            properties:
+                _id: {type: string, description: 'Unique identifier'}
+                cart_id: {type: string, description: 'Reference to Cart'}
+                product_variant_id: {type: string, description: 'Reference to ProductVariant'}
+                quantity: {type: integer, minimum: 1}
+                unit_price: {type: number, description: 'Price at time of adding to cart'}
+                total_price: {type: number, description: 'quantity * unit_price'}
+                added_at: {type: string, format: date-time}
+                is_available: {type: boolean, default: true}
+        Order:
+            type: object
+            required: [user_id, items, total_amount]
+            properties:
+                _id: {type: string, description: 'Unique identifier'}
+                order_number: {type: string, description: 'Unique order number'}
+                user_id: {type: string, description: 'Reference to User'}
+                items: {type: array, items: {$ref: '#/components/schemas/OrderItem'}}
+                status: {type: string, enum: [pending, confirmed, processing, shipped, delivered, cancelled], default: pending}
+                payment_status: {type: string, enum: [pending, paid, failed, refunded], default: pending}
+                payment_method: {type: string}
+                shipping_address: {type: object}
+                billing_address: {type: object}
+                subtotal: {type: number}
+                tax_amount: {type: number}
+                shipping_cost: {type: number}
+                discount_amount: {type: number}
+                total_amount: {type: number}
+                notes: {type: string}
+                tracking_number: {type: string}
+                shipped_at: {type: string, format: date-time}
+                delivered_at: {type: string, format: date-time}
+                cancelled_at: {type: string, format: date-time}
+                createdAt: {type: string, format: date-time}
+                updatedAt: {type: string, format: date-time}
+        OrderItem:
+            type: object
+            required: [product_variant_id, quantity, unit_price]
+            properties:
+                _id: {type: string, description: 'Unique identifier'}
+                order_id: {type: string, description: 'Reference to Order'}
+                product_variant_id: {type: string, description: 'Reference to ProductVariant'}
+                quantity: {type: integer, minimum: 1}
+                unit_price: {type: number}
+                total_price: {type: number}
+                product_name: {type: string}
+                variant_details: {type: object}
+        CouponCampaign:
+            type: object
+            required: [code, discount_type, discount_value]
+            properties:
+                _id: {type: string, description: 'Unique identifier'}
+                code: {type: string, description: 'Coupon code'}
+                name: {type: string, description: 'Campaign name'}
+                description: {type: string}
+                discount_type: {type: string, enum: [percentage, fixed_amount]}
+                discount_value: {type: number, minimum: 0}
+                min_order_value: {type: number, minimum: 0}
+                max_discount_amount: {type: number}
+                usage_limit: {type: integer}
+                usage_count: {type: integer, default: 0}
+                is_active: {type: boolean, default: true}
+                starts_at: {type: string, format: date-time}
+                expires_at: {type: string, format: date-time}
+                applicable_products: {type: array, items: {type: string}}
+                applicable_categories: {type: array, items: {type: string}}
+                createdAt: {type: string, format: date-time}
+                updatedAt: {type: string, format: date-time}
+        DynamicContent:
+            type: object
+            required: [key, content_type]
+            properties:
+                _id: {type: string, description: 'Unique identifier'}
+                key: {type: string, description: 'Unique content key'}
+                title: {type: string}
+                content_type: {type: string, enum: [text, html, json, image]}
+                content: {type: string, description: 'Content data'}
+                metadata: {type: object}
+                is_active: {type: boolean, default: true}
+                version: {type: integer, default: 1}
+                tags: {type: array, items: {type: string}}
+                createdAt: {type: string, format: date-time}
+                updatedAt: {type: string, format: date-time}
+        Favorite:
+            type: object
+            required: [user_id, product_id]
+            properties:
+                _id: {type: string, description: 'Unique identifier'}
+                user_id: {type: string, description: 'Reference to User'}
+                product_id: {type: string, description: 'Reference to Product'}
+                added_at: {type: string, format: date-time}
+                is_active: {type: boolean, default: true}
+        PaymentMethod:
+            type: object
+            required: [user_id, type]
+            properties:
+                _id: {type: string, description: 'Unique identifier'}
+                user_id: {type: string, description: 'Reference to User'}
+                type: {type: string, enum: [credit_card, debit_card, upi, wallet, net_banking]}
+                provider: {type: string}
+                masked_details: {type: string}
+                is_primary: {type: boolean, default: false}
+                is_active: {type: boolean, default: true}
+                expires_at: {type: string, format: date-time}
+                createdAt: {type: string, format: date-time}
+                updatedAt: {type: string, format: date-time}
+        ProductReview:
+            type: object
+            required: [user_id, product_id, rating]
+            properties:
+                _id: {type: string, description: 'Unique identifier'}
+                user_id: {type: string, description: 'Reference to User'}
+                product_id: {type: string, description: 'Reference to Product'}
+                order_id: {type: string, description: 'Reference to Order'}
+                rating: {type: integer, minimum: 1, maximum: 5}
+                title: {type: string, maxLength: 100}
+                comment: {type: string, maxLength: 2000}
+                images: {type: array, items: {type: string}}
+                is_verified_purchase: {type: boolean, default: false}
+                helpful_count: {type: integer, default: 0}
+                status: {type: string, enum: [pending, approved, rejected], default: pending}
+                admin_response: {type: string}
+                createdAt: {type: string, format: date-time}
+                updatedAt: {type: string, format: date-time}
+        ReviewReport:
+            type: object
+            required: [user_id, review_id, reason]
+            properties:
+                _id: {type: string, description: 'Unique identifier'}
+                user_id: {type: string, description: 'Reference to User reporting'}
+                review_id: {type: string, description: 'Reference to ProductReview'}
+                reason: {type: string, enum: [spam, inappropriate, fake, misleading, other]}
+                description: {type: string, maxLength: 500}
+                status: {type: string, enum: [pending, reviewed, resolved], default: pending}
+                admin_notes: {type: string}
+                createdAt: {type: string, format: date-time}
+                updatedAt: {type: string, format: date-time}
+        Wallet:
+            type: object
+            required: [user_id]
+            properties:
+                _id: {type: string, description: 'Unique identifier'}
+                user_id: {type: string, description: 'Reference to User'}
+                balance: {type: number, default: 0, minimum: 0}
+                currency: {type: string, default: INR}
+                is_active: {type: boolean, default: true}
+                last_transaction_at: {type: string, format: date-time}
+                createdAt: {type: string, format: date-time}
+                updatedAt: {type: string, format: date-time}
+        WalletTransaction:
+            type: object
+            required: [wallet_id, type, amount]
+            properties:
+                _id: {type: string, description: 'Unique identifier'}
+                wallet_id: {type: string, description: 'Reference to Wallet'}
+                transaction_id: {type: string, description: 'Unique transaction ID'}
+                type: {type: string, enum: [credit, debit]}
+                amount: {type: number, minimum: 0}
+                description: {type: string}
+                reference_type: {type: string, enum: [order, refund, bonus, cashback, withdrawal]}
+                reference_id: {type: string}
+                balance_before: {type: number}
+                balance_after: {type: number}
+                status: {type: string, enum: [pending, completed, failed], default: pending}
+                metadata: {type: object}
+                processed_at: {type: string, format: date-time}
+                createdAt: {type: string, format: date-time}
+                updatedAt: {type: string, format: date-time}
     responses:
         '400':
             description: 'Bad Request - Invalid input data'
@@ -198,13 +513,13 @@ components:
         '500':
             description: 'Internal Server Error'
             content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}
-    tags:
-        name: Brands
-        description: 'Brand management endpoints'
 tags:
     -
         name: Authentication
         description: 'Authentication and authorization operations'
+    -
+        name: Brands
+        description: 'Brand management endpoints'
     -
         name: Users
         description: 'User management operations'
@@ -223,7 +538,1521 @@ tags:
     -
         name: 'Product Variants'
         description: 'Product variant management endpoints (SKUs and purchasable versions)'
+    -
+        name: Suppliers
+        description: 'Supplier management endpoints for inventory suppliers'
+    -
+        name: 'Supplier Contact Numbers'
+        description: 'Supplier contact number management endpoints'
+    -
+        name: Purchases
+        description: 'Purchase order management endpoints for inventory purchases'
+    -
+        name: Inventory
+        description: 'Inventory management endpoints for stock tracking and control'
+    -
+        name: Listings
+        description: 'Product listing management endpoints for platform-specific listings'
+    -
+        name: Blog
+        description: 'Blog management endpoints for content publishing'
+    -
+        name: 'Admin Blog'
+        description: 'Admin blog management endpoints'
+    -
+        name: Cart
+        description: 'Shopping cart management endpoints'
+    -
+        name: Orders
+        description: 'Order management endpoints for user orders'
+    -
+        name: 'Admin Orders'
+        description: 'Admin order management endpoints'
+    -
+        name: Coupons
+        description: 'Coupon and discount management endpoints'
+    -
+        name: 'Admin Coupons'
+        description: 'Admin coupon management endpoints'
 paths:
+    # Authentication
+    /api/v1/auth/login:
+        post:
+            tags: [Authentication]
+            summary: User login
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required: [email, password]
+                            properties: {email: {type: string}, password: {type: string}}
+            responses:
+                '200': {description: Login successful, content: {application/json: {schema: {type: object, properties: {token: {type: string}, user: {$ref: '#/components/schemas/User'}}}}}}
+                '401': {description: Invalid credentials}
+    /api/v1/auth/register:
+        post:
+            tags: [Authentication]
+            summary: User registration
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema: {$ref: '#/components/schemas/UserCreateRequest'}
+            responses:
+                '201': {description: Registration successful, content: {application/json: {schema: {type: object, properties: {token: {type: string}, user: {$ref: '#/components/schemas/User'}}}}}}
+                '400': {description: Validation error}
+    
+    # Blog Posts
+    /api/v1/blog:
+        get:
+            tags: [Blog]
+            summary: Get all published blog posts
+            parameters:
+                - {name: page, in: query, schema: {type: integer, default: 1}}
+                - {name: limit, in: query, schema: {type: integer, default: 10}}
+                - {name: search, in: query, schema: {type: string}}
+                - {name: tags, in: query, schema: {type: string}}
+            responses:
+                '200': {description: Success, content: {application/json: {schema: {type: object, properties: {posts: {type: array, items: {$ref: '#/components/schemas/BlogPost'}}, pagination: {type: object}}}}}}
+    /api/v1/blog/{slug}:
+        get:
+            tags: [Blog]
+            summary: Get blog post by slug
+            parameters:
+                - {name: slug, in: path, required: true, schema: {type: string}}
+            responses:
+                '200': {description: Success, content: {application/json: {schema: {$ref: '#/components/schemas/BlogPost'}}}}
+                '404': {description: Blog post not found}
+    /api/v1/admin/blog:
+        get:
+            tags: [Admin Blog]
+            summary: Get all blog posts (admin)
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: page, in: query, schema: {type: integer, default: 1}}
+                - {name: limit, in: query, schema: {type: integer, default: 10}}
+                - {name: status, in: query, schema: {type: string, enum: [draft, published, archived]}}
+            responses:
+                '200': {description: Success, content: {application/json: {schema: {type: object, properties: {posts: {type: array, items: {$ref: '#/components/schemas/BlogPost'}}, pagination: {type: object}}}}}}
+                '401': {description: Unauthorized}
+        post:
+            tags: [Admin Blog]
+            summary: Create new blog post
+            security: [{BearerAuth: []}]
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required: [title, content]
+                            properties: {title: {type: string}, content: {type: string}, excerpt: {type: string}, status: {type: string, enum: [draft, published]}, tags: {type: array, items: {type: string}}}
+            responses:
+                '201': {description: Blog post created, content: {application/json: {schema: {$ref: '#/components/schemas/BlogPost'}}}}
+                '401': {description: Unauthorized}
+    /api/v1/admin/blog/{id}:
+        get:
+            tags: [Admin Blog]
+            summary: Get blog post by ID (admin)
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: id, in: path, required: true, schema: {type: string}}
+            responses:
+                '200': {description: Success, content: {application/json: {schema: {$ref: '#/components/schemas/BlogPost'}}}}
+                '404': {description: Blog post not found}
+        put:
+            tags: [Admin Blog]
+            summary: Update blog post
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: id, in: path, required: true, schema: {type: string}}
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties: {title: {type: string}, content: {type: string}, excerpt: {type: string}, status: {type: string, enum: [draft, published, archived]}, tags: {type: array, items: {type: string}}}
+            responses:
+                '200': {description: Blog post updated, content: {application/json: {schema: {$ref: '#/components/schemas/BlogPost'}}}}
+                '404': {description: Blog post not found}
+        delete:
+            tags: [Admin Blog]
+            summary: Delete blog post
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: id, in: path, required: true, schema: {type: string}}
+            responses:
+                '200': {description: Blog post deleted}
+                '404': {description: Blog post not found}
+
+    # Cart
+    /api/v1/cart:
+        get:
+            tags: [Cart]
+            summary: Get user's cart
+            security: [{BearerAuth: []}]
+            responses:
+                '200': {description: Success, content: {application/json: {schema: {$ref: '#/components/schemas/Cart'}}}}
+                '401': {description: Unauthorized}
+        post:
+            tags: [Cart]
+            summary: Add item to cart
+            security: [{BearerAuth: []}]
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required: [product_variant_id, quantity]
+                            properties: {product_variant_id: {type: string}, quantity: {type: integer, minimum: 1}}
+            responses:
+                '200': {description: Item added to cart, content: {application/json: {schema: {$ref: '#/components/schemas/Cart'}}}}
+                '401': {description: Unauthorized}
+        delete:
+            tags: [Cart]
+            summary: Clear cart
+            security: [{BearerAuth: []}]
+            responses:
+                '200': {description: Cart cleared}
+                '401': {description: Unauthorized}
+    /api/v1/cart/items/{itemId}:
+        put:
+            tags: [Cart]
+            summary: Update cart item quantity
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: itemId, in: path, required: true, schema: {type: string}}
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required: [quantity]
+                            properties: {quantity: {type: integer, minimum: 1}}
+            responses:
+                '200': {description: Cart item updated, content: {application/json: {schema: {$ref: '#/components/schemas/Cart'}}}}
+                '404': {description: Cart item not found}
+        delete:
+            tags: [Cart]
+            summary: Remove item from cart
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: itemId, in: path, required: true, schema: {type: string}}
+            responses:
+                '200': {description: Item removed from cart}
+                '404': {description: Cart item not found}
+
+    # Orders
+    /api/v1/orders:
+        get:
+            tags: [Orders]
+            summary: Get user's orders
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: page, in: query, schema: {type: integer, default: 1}}
+                - {name: limit, in: query, schema: {type: integer, default: 10}}
+                - {name: status, in: query, schema: {type: string}}
+            responses:
+                '200': {description: Success, content: {application/json: {schema: {type: object, properties: {orders: {type: array, items: {$ref: '#/components/schemas/Order'}}, pagination: {type: object}}}}}}
+                '401': {description: Unauthorized}
+        post:
+            tags: [Orders]
+            summary: Create new order
+            security: [{BearerAuth: []}]
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required: [shipping_address, payment_method]
+                            properties: {shipping_address: {type: object}, billing_address: {type: object}, payment_method: {type: string}, notes: {type: string}}
+            responses:
+                '201': {description: Order created, content: {application/json: {schema: {$ref: '#/components/schemas/Order'}}}}
+                '401': {description: Unauthorized}
+    /api/v1/orders/{id}:
+        get:
+            tags: [Orders]
+            summary: Get order by ID
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: id, in: path, required: true, schema: {type: string}}
+            responses:
+                '200': {description: Success, content: {application/json: {schema: {$ref: '#/components/schemas/Order'}}}}
+                '404': {description: Order not found}
+        put:
+            tags: [Orders]
+            summary: Update order status (user cancel only)
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: id, in: path, required: true, schema: {type: string}}
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required: [status]
+                            properties: {status: {type: string, enum: [cancelled]}}
+            responses:
+                '200': {description: Order updated, content: {application/json: {schema: {$ref: '#/components/schemas/Order'}}}}
+                '404': {description: Order not found}
+    /api/v1/admin/orders:
+        get:
+            tags: [Admin Orders]
+            summary: Get all orders (admin)
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: page, in: query, schema: {type: integer, default: 1}}
+                - {name: limit, in: query, schema: {type: integer, default: 10}}
+                - {name: status, in: query, schema: {type: string}}
+                - {name: user_id, in: query, schema: {type: string}}
+            responses:
+                '200': {description: Success, content: {application/json: {schema: {type: object, properties: {orders: {type: array, items: {$ref: '#/components/schemas/Order'}}, pagination: {type: object}}}}}}
+                '401': {description: Unauthorized}
+    /api/v1/admin/orders/{id}:
+        put:
+            tags: [Admin Orders]
+            summary: Update order status (admin)
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: id, in: path, required: true, schema: {type: string}}
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties: {status: {type: string, enum: [pending, confirmed, processing, shipped, delivered, cancelled]}, tracking_number: {type: string}, notes: {type: string}}
+            responses:
+                '200': {description: Order updated, content: {application/json: {schema: {$ref: '#/components/schemas/Order'}}}}
+                '404': {description: Order not found}
+
+    # Coupons
+    /api/v1/coupons/validate:
+        post:
+            tags: [Coupons]
+            summary: Validate coupon code
+            security: [{BearerAuth: []}]
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required: [code, order_value]
+                            properties: {code: {type: string}, order_value: {type: number}}
+            responses:
+                '200': {description: Coupon valid, content: {application/json: {schema: {type: object, properties: {valid: {type: boolean}, discount_amount: {type: number}, coupon: {$ref: '#/components/schemas/CouponCampaign'}}}}}}
+                '400': {description: Invalid or expired coupon}
+    /api/v1/admin/coupons:
+        get:
+            tags: [Admin Coupons]
+            summary: Get all coupons (admin)
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: page, in: query, schema: {type: integer, default: 1}}
+                - {name: limit, in: query, schema: {type: integer, default: 10}}
+                - {name: is_active, in: query, schema: {type: boolean}}
+            responses:
+                '200': {description: Success, content: {application/json: {schema: {type: object, properties: {coupons: {type: array, items: {$ref: '#/components/schemas/CouponCampaign'}}, pagination: {type: object}}}}}}
+                '401': {description: Unauthorized}
+        post:
+            tags: [Admin Coupons]
+            summary: Create new coupon
+            security: [{BearerAuth: []}]
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required: [code, discount_type, discount_value]
+                            properties: {code: {type: string}, name: {type: string}, discount_type: {type: string, enum: [percentage, fixed_amount]}, discount_value: {type: number}, min_order_value: {type: number}, usage_limit: {type: integer}, starts_at: {type: string, format: date-time}, expires_at: {type: string, format: date-time}}
+            responses:
+                '201': {description: Coupon created, content: {application/json: {schema: {$ref: '#/components/schemas/CouponCampaign'}}}}
+                '401': {description: Unauthorized}
+    /api/v1/admin/coupons/{id}:
+        get:
+            tags: [Admin Coupons]
+            summary: Get coupon by ID (admin)
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: id, in: path, required: true, schema: {type: string}}
+            responses:
+                '200': {description: Success, content: {application/json: {schema: {$ref: '#/components/schemas/CouponCampaign'}}}}
+                '404': {description: Coupon not found}
+        put:
+            tags: [Admin Coupons]
+            summary: Update coupon
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: id, in: path, required: true, schema: {type: string}}
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties: {name: {type: string}, discount_value: {type: number}, min_order_value: {type: number}, usage_limit: {type: integer}, is_active: {type: boolean}, expires_at: {type: string, format: date-time}}
+            responses:
+                '200': {description: Coupon updated, content: {application/json: {schema: {$ref: '#/components/schemas/CouponCampaign'}}}}
+                '404': {description: Coupon not found}
+        delete:
+            tags: [Admin Coupons]
+            summary: Delete coupon
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: id, in: path, required: true, schema: {type: string}}
+            responses:
+                '200': {description: Coupon deleted}
+                '404': {description: Coupon not found}
+
+    # Dynamic Content
+    /api/v1/content/{key}:
+        get:
+            tags: [Dynamic Content]
+            summary: Get content by key
+            parameters:
+                - {name: key, in: path, required: true, schema: {type: string}}
+            responses:
+                '200': {description: Success, content: {application/json: {schema: {$ref: '#/components/schemas/DynamicContent'}}}}
+                '404': {description: Content not found}
+    /api/v1/admin/content:
+        get:
+            tags: [Admin Dynamic Content]
+            summary: Get all content (admin)
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: page, in: query, schema: {type: integer, default: 1}}
+                - {name: limit, in: query, schema: {type: integer, default: 10}}
+                - {name: content_type, in: query, schema: {type: string}}
+            responses:
+                '200': {description: Success, content: {application/json: {schema: {type: object, properties: {content: {type: array, items: {$ref: '#/components/schemas/DynamicContent'}}, pagination: {type: object}}}}}}
+                '401': {description: Unauthorized}
+        post:
+            tags: [Admin Dynamic Content]
+            summary: Create new content
+            security: [{BearerAuth: []}]
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required: [key, content_type, content]
+                            properties: {key: {type: string}, title: {type: string}, content_type: {type: string, enum: [text, html, json, image]}, content: {type: string}, metadata: {type: object}, tags: {type: array, items: {type: string}}}
+            responses:
+                '201': {description: Content created, content: {application/json: {schema: {$ref: '#/components/schemas/DynamicContent'}}}}
+                '401': {description: Unauthorized}
+    /api/v1/admin/content/{id}:
+        get:
+            tags: [Admin Dynamic Content]
+            summary: Get content by ID (admin)
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: id, in: path, required: true, schema: {type: string}}
+            responses:
+                '200': {description: Success, content: {application/json: {schema: {$ref: '#/components/schemas/DynamicContent'}}}}
+                '404': {description: Content not found}
+        put:
+            tags: [Admin Dynamic Content]
+            summary: Update content
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: id, in: path, required: true, schema: {type: string}}
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties: {title: {type: string}, content: {type: string}, metadata: {type: object}, is_active: {type: boolean}, tags: {type: array, items: {type: string}}}
+            responses:
+                '200': {description: Content updated, content: {application/json: {schema: {$ref: '#/components/schemas/DynamicContent'}}}}
+                '404': {description: Content not found}
+        delete:
+            tags: [Admin Dynamic Content]
+            summary: Delete content
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: id, in: path, required: true, schema: {type: string}}
+            responses:
+                '200': {description: Content deleted}
+                '404': {description: Content not found}
+
+    # Favorites
+    /api/v1/favorites:
+        get:
+            tags: [Favorites]
+            summary: Get user's favorites
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: page, in: query, schema: {type: integer, default: 1}}
+                - {name: limit, in: query, schema: {type: integer, default: 10}}
+            responses:
+                '200': {description: Success, content: {application/json: {schema: {type: object, properties: {favorites: {type: array, items: {$ref: '#/components/schemas/Favorite'}}, pagination: {type: object}}}}}}
+                '401': {description: Unauthorized}
+        post:
+            tags: [Favorites]
+            summary: Add product to favorites
+            security: [{BearerAuth: []}]
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required: [product_id]
+                            properties: {product_id: {type: string}}
+            responses:
+                '201': {description: Product added to favorites, content: {application/json: {schema: {$ref: '#/components/schemas/Favorite'}}}}
+                '401': {description: Unauthorized}
+    /api/v1/favorites/{productId}:
+        delete:
+            tags: [Favorites]
+            summary: Remove product from favorites
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: productId, in: path, required: true, schema: {type: string}}
+            responses:
+                '200': {description: Product removed from favorites}
+                '404': {description: Favorite not found}
+
+    # Payment Methods
+    /api/v1/payment-methods:
+        get:
+            tags: [Payment Methods]
+            summary: Get user's payment methods
+            security: [{BearerAuth: []}]
+            responses:
+                '200': {description: Success, content: {application/json: {schema: {type: array, items: {$ref: '#/components/schemas/PaymentMethod'}}}}}
+                '401': {description: Unauthorized}
+        post:
+            tags: [Payment Methods]
+            summary: Add new payment method
+            security: [{BearerAuth: []}]
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required: [type, provider]
+                            properties: {type: {type: string, enum: [credit_card, debit_card, upi, wallet, net_banking]}, provider: {type: string}, masked_details: {type: string}, is_primary: {type: boolean}}
+            responses:
+                '201': {description: Payment method added, content: {application/json: {schema: {$ref: '#/components/schemas/PaymentMethod'}}}}
+                '401': {description: Unauthorized}
+    /api/v1/payment-methods/{id}:
+        put:
+            tags: [Payment Methods]
+            summary: Update payment method
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: id, in: path, required: true, schema: {type: string}}
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties: {is_primary: {type: boolean}, is_active: {type: boolean}}
+            responses:
+                '200': {description: Payment method updated, content: {application/json: {schema: {$ref: '#/components/schemas/PaymentMethod'}}}}
+                '404': {description: Payment method not found}
+        delete:
+            tags: [Payment Methods]
+            summary: Delete payment method
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: id, in: path, required: true, schema: {type: string}}
+            responses:
+                '200': {description: Payment method deleted}
+                '404': {description: Payment method not found}
+
+    # Product Reviews
+    /api/v1/products/{productId}/reviews:
+        get:
+            tags: [Product Reviews]
+            summary: Get product reviews
+            parameters:
+                - {name: productId, in: path, required: true, schema: {type: string}}
+                - {name: page, in: query, schema: {type: integer, default: 1}}
+                - {name: limit, in: query, schema: {type: integer, default: 10}}
+                - {name: rating, in: query, schema: {type: integer, minimum: 1, maximum: 5}}
+            responses:
+                '200': {description: Success, content: {application/json: {schema: {type: object, properties: {reviews: {type: array, items: {$ref: '#/components/schemas/ProductReview'}}, pagination: {type: object}, rating_summary: {type: object}}}}}}
+        post:
+            tags: [Product Reviews]
+            summary: Create product review
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: productId, in: path, required: true, schema: {type: string}}
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required: [rating]
+                            properties: {rating: {type: integer, minimum: 1, maximum: 5}, title: {type: string}, comment: {type: string}, images: {type: array, items: {type: string}}, order_id: {type: string}}
+            responses:
+                '201': {description: Review created, content: {application/json: {schema: {$ref: '#/components/schemas/ProductReview'}}}}
+                '401': {description: Unauthorized}
+    /api/v1/reviews/{id}:
+        put:
+            tags: [Product Reviews]
+            summary: Update review
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: id, in: path, required: true, schema: {type: string}}
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties: {rating: {type: integer, minimum: 1, maximum: 5}, title: {type: string}, comment: {type: string}, images: {type: array, items: {type: string}}}
+            responses:
+                '200': {description: Review updated, content: {application/json: {schema: {$ref: '#/components/schemas/ProductReview'}}}}
+                '404': {description: Review not found}
+        delete:
+            tags: [Product Reviews]
+            summary: Delete review
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: id, in: path, required: true, schema: {type: string}}
+            responses:
+                '200': {description: Review deleted}
+                '404': {description: Review not found}
+    /api/v1/reviews/{id}/helpful:
+        post:
+            tags: [Product Reviews]
+            summary: Mark review as helpful
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: id, in: path, required: true, schema: {type: string}}
+            responses:
+                '200': {description: Review marked as helpful}
+                '401': {description: Unauthorized}
+    /api/v1/admin/reviews:
+        get:
+            tags: [Admin Reviews]
+            summary: Get all reviews (admin)
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: page, in: query, schema: {type: integer, default: 1}}
+                - {name: limit, in: query, schema: {type: integer, default: 10}}
+                - {name: status, in: query, schema: {type: string, enum: [pending, approved, rejected]}}
+                - {name: product_id, in: query, schema: {type: string}}
+            responses:
+                '200': {description: Success, content: {application/json: {schema: {type: object, properties: {reviews: {type: array, items: {$ref: '#/components/schemas/ProductReview'}}, pagination: {type: object}}}}}}
+                '401': {description: Unauthorized}
+    /api/v1/admin/reviews/{id}:
+        put:
+            tags: [Admin Reviews]
+            summary: Update review status (admin)
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: id, in: path, required: true, schema: {type: string}}
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties: {status: {type: string, enum: [pending, approved, rejected]}, admin_response: {type: string}}
+            responses:
+                '200': {description: Review updated, content: {application/json: {schema: {$ref: '#/components/schemas/ProductReview'}}}}
+                '404': {description: Review not found}
+
+    # Review Reports
+    /api/v1/reviews/{reviewId}/report:
+        post:
+            tags: [Review Reports]
+            summary: Report a review
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: reviewId, in: path, required: true, schema: {type: string}}
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required: [reason]
+                            properties: {reason: {type: string, enum: [spam, inappropriate, fake, misleading, other]}, description: {type: string}}
+            responses:
+                '201': {description: Review reported, content: {application/json: {schema: {$ref: '#/components/schemas/ReviewReport'}}}}
+                '401': {description: Unauthorized}
+    /api/v1/admin/review-reports:
+        get:
+            tags: [Admin Review Reports]
+            summary: Get all review reports (admin)
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: page, in: query, schema: {type: integer, default: 1}}
+                - {name: limit, in: query, schema: {type: integer, default: 10}}
+                - {name: status, in: query, schema: {type: string, enum: [pending, reviewed, resolved]}}
+            responses:
+                '200': {description: Success, content: {application/json: {schema: {type: object, properties: {reports: {type: array, items: {$ref: '#/components/schemas/ReviewReport'}}, pagination: {type: object}}}}}}
+                '401': {description: Unauthorized}
+    /api/v1/admin/review-reports/{id}:
+        put:
+            tags: [Admin Review Reports]
+            summary: Update review report status (admin)
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: id, in: path, required: true, schema: {type: string}}
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties: {status: {type: string, enum: [pending, reviewed, resolved]}, admin_notes: {type: string}}
+            responses:
+                '200': {description: Review report updated, content: {application/json: {schema: {$ref: '#/components/schemas/ReviewReport'}}}}
+                '404': {description: Review report not found}
+
+    # Wallet
+    /api/v1/wallet:
+        get:
+            tags: [Wallet]
+            summary: Get user's wallet
+            security: [{BearerAuth: []}]
+            responses:
+                '200': {description: Success, content: {application/json: {schema: {$ref: '#/components/schemas/Wallet'}}}}
+                '401': {description: Unauthorized}
+    /api/v1/wallet/transactions:
+        get:
+            tags: [Wallet]
+            summary: Get wallet transactions
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: page, in: query, schema: {type: integer, default: 1}}
+                - {name: limit, in: query, schema: {type: integer, default: 10}}
+                - {name: type, in: query, schema: {type: string, enum: [credit, debit]}}
+            responses:
+                '200': {description: Success, content: {application/json: {schema: {type: object, properties: {transactions: {type: array, items: {$ref: '#/components/schemas/WalletTransaction'}}, pagination: {type: object}}}}}}
+                '401': {description: Unauthorized}
+        post:
+            tags: [Wallet]
+            summary: Add money to wallet
+            security: [{BearerAuth: []}]
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required: [amount]
+                            properties: {amount: {type: number, minimum: 1}, payment_method: {type: string}}
+            responses:
+                '201': {description: Money added to wallet, content: {application/json: {schema: {$ref: '#/components/schemas/WalletTransaction'}}}}
+                '401': {description: Unauthorized}
+    /api/v1/admin/wallets:
+        get:
+            tags: [Admin Wallets]
+            summary: Get all wallets (admin)
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: page, in: query, schema: {type: integer, default: 1}}
+                - {name: limit, in: query, schema: {type: integer, default: 10}}
+                - {name: user_id, in: query, schema: {type: string}}
+            responses:
+                '200': {description: Success, content: {application/json: {schema: {type: object, properties: {wallets: {type: array, items: {$ref: '#/components/schemas/Wallet'}}, pagination: {type: object}}}}}}
+                '401': {description: Unauthorized}
+    /api/v1/admin/wallets/{id}/adjust:
+        post:
+            tags: [Admin Wallets]
+            summary: Adjust wallet balance (admin)
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: id, in: path, required: true, schema: {type: string}}
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required: [type, amount, description]
+                            properties: {type: {type: string, enum: [credit, debit]}, amount: {type: number, minimum: 0}, description: {type: string}}
+            responses:
+                '201': {description: Wallet balance adjusted, content: {application/json: {schema: {$ref: '#/components/schemas/WalletTransaction'}}}}
+                '401': {description: Unauthorized}
+
+    # Users
+    /api/v1/users/profile:
+        get:
+            tags: [Users]
+            summary: Get user profile
+            security: [{BearerAuth: []}]
+            responses:
+                '200': {description: Success, content: {application/json: {schema: {$ref: '#/components/schemas/User'}}}}
+                '401': {description: Unauthorized}
+        put:
+            tags: [Users]
+            summary: Update user profile
+            security: [{BearerAuth: []}]
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema: {$ref: '#/components/schemas/UserUpdateRequest'}
+            responses:
+                '200': {description: Profile updated, content: {application/json: {schema: {$ref: '#/components/schemas/User'}}}}
+                '401': {description: Unauthorized}
+    /api/v1/admin/users:
+        get:
+            tags: [Admin Users]
+            summary: Get all users (admin)
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: page, in: query, schema: {type: integer, default: 1}}
+                - {name: limit, in: query, schema: {type: integer, default: 10}}
+                - {name: role, in: query, schema: {type: string, enum: [user, admin]}}
+                - {name: isActive, in: query, schema: {type: boolean}}
+            responses:
+                '200': {description: Success, content: {application/json: {schema: {type: object, properties: {users: {type: array, items: {$ref: '#/components/schemas/User'}}, pagination: {type: object}}}}}}
+                '401': {description: Unauthorized}
+        post:
+            tags: [Admin Users]
+            summary: Create new user (admin)
+            security: [{BearerAuth: []}]
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema: {$ref: '#/components/schemas/UserCreateRequest'}
+            responses:
+                '201': {description: User created, content: {application/json: {schema: {$ref: '#/components/schemas/User'}}}}
+                '401': {description: Unauthorized}
+    /api/v1/admin/users/{id}:
+        get:
+            tags: [Admin Users]
+            summary: Get user by ID (admin)
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: id, in: path, required: true, schema: {type: string}}
+            responses:
+                '200': {description: Success, content: {application/json: {schema: {$ref: '#/components/schemas/User'}}}}
+                '404': {description: User not found}
+        put:
+            tags: [Admin Users]
+            summary: Update user (admin)
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: id, in: path, required: true, schema: {type: string}}
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema: {$ref: '#/components/schemas/UserUpdateRequest'}
+            responses:
+                '200': {description: User updated, content: {application/json: {schema: {$ref: '#/components/schemas/User'}}}}
+                '404': {description: User not found}
+        delete:
+            tags: [Admin Users]
+            summary: Delete user (admin)
+            security: [{BearerAuth: []}]
+            parameters:
+                - {name: id, in: path, required: true, schema: {type: string}}
+            responses:
+                '200': {description: User deleted}
+                '404': {description: User not found}
+
+    # Platforms
+    /api/v1/platforms:
+        get:
+            tags: [Platforms]
+            summary: Get all platforms
+            parameters:
+                - in: query
+                  name: page
+                  schema:
+                      type: integer
+                      minimum: 1
+                      default: 1
+                  description: Page number for pagination
+                - in: query
+                  name: limit
+                  schema:
+                      type: integer
+                      minimum: 1
+                      maximum: 50
+                      default: 10
+                  description: Number of platforms per page
+                - in: query
+                  name: is_active
+                  schema:
+                      type: boolean
+                  description: Filter by active status
+                - in: query
+                  name: search
+                  schema:
+                      type: string
+                      maxLength: 100
+                  description: Search term for name or description
+                - in: query
+                  name: sort
+                  schema:
+                      type: string
+                      enum: [name, createdAt, updatedAt]
+                      default: createdAt
+                  description: Field to sort by
+                - in: query
+                  name: order
+                  schema:
+                      type: string
+                      enum: [asc, desc]
+                      default: desc
+                  description: Sort order
+            responses:
+                '200':
+                    description: Platforms retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    success:
+                                        type: boolean
+                                        example: true
+                                    data:
+                                        type: array
+                                        items:
+                                            $ref: '#/components/schemas/Platform'
+                                    pagination:
+                                        type: object
+                                        properties:
+                                            currentPage:
+                                                type: integer
+                                                description: Current page number
+                                            totalPages:
+                                                type: integer
+                                                description: Total number of pages
+                                            totalCount:
+                                                type: integer
+                                                description: Total number of platforms
+                                            limit:
+                                                type: integer
+                                                description: Number of platforms per page
+                                            hasNextPage:
+                                                type: boolean
+                                                description: Whether there is a next page
+                                            hasPrevPage:
+                                                type: boolean
+                                                description: Whether there is a previous page
+                                    filters:
+                                        type: object
+                                        properties:
+                                            is_active:
+                                                type: boolean
+                                                nullable: true
+                                                description: Applied active status filter
+                                            search:
+                                                type: string
+                                                nullable: true
+                                                description: Applied search term
+                                example:
+                                    success: true
+                                    data:
+                                        - _id: "674b1234567890abcdef1234"
+                                          name: "Amazon"
+                                          slug: "amazon"
+                                          description: "Amazon marketplace platform"
+                                          base_url: "https://www.amazon.com"
+                                          logo_url: "https://logo.clearbit.com/amazon.com"
+                                          is_active: true
+                                          createdAt: "2024-11-30T12:00:00.000Z"
+                                          updatedAt: "2024-11-30T12:00:00.000Z"
+                                    pagination:
+                                        currentPage: 1
+                                        totalPages: 1
+                                        totalCount: 5
+                                        limit: 10
+                                        hasNextPage: false
+                                        hasPrevPage: false
+                                    filters:
+                                        is_active: null
+                                        search: null
+                '400':
+                    description: Bad request - invalid query parameters
+                '401':
+                    description: Unauthorized - Admin access required
+                '500':
+                    description: Internal server error
+        post:
+            tags: [Platforms]
+            summary: Create new platform
+            security:
+                - BearerAuth: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/PlatformCreateRequest'
+            responses:
+                '201':
+                    description: Platform created successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Platform'
+                '400':
+                    description: Validation error
+                '401':
+                    description: Unauthorized
+    /api/v1/platforms/{id}:
+        get:
+            tags: [Platforms]
+            summary: Get platform by ID
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                  description: Platform ID
+            responses:
+                '200':
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Platform'
+                '404':
+                    description: Platform not found
+        put:
+            tags: [Platforms]
+            summary: Update platform
+            security:
+                - BearerAuth: []
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                  description: Platform ID
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/PlatformUpdateRequest'
+            responses:
+                '200':
+                    description: Platform updated successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Platform'
+                '404':
+                    description: Platform not found
+                '401':
+                    description: Unauthorized
+        delete:
+            tags: [Platforms]
+            summary: Delete platform
+            security:
+                - BearerAuth: []
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                  description: Platform ID
+            responses:
+                '200':
+                    description: Platform deleted successfully
+                '404':
+                    description: Platform not found
+                '401':
+                    description: Unauthorized
+
+    # Purchases
+    /api/v1/purchases:
+        get:
+            tags: [Purchases]
+            summary: Get all purchases
+            security:
+                - BearerAuth: []
+            parameters:
+                - name: page
+                  in: query
+                  schema:
+                      type: integer
+                      default: 1
+                  description: Page number
+                - name: limit
+                  in: query
+                  schema:
+                      type: integer
+                      default: 10
+                  description: Items per page
+                - name: supplier_id
+                  in: query
+                  schema:
+                      type: string
+                  description: Filter by supplier ID
+                - name: status
+                  in: query
+                  schema:
+                      type: string
+                      enum: [pending, approved, rejected, completed]
+                  description: Filter by status
+            responses:
+                '200':
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    data:
+                                        type: array
+                                        items:
+                                            $ref: '#/components/schemas/Purchase'
+                                    total:
+                                        type: integer
+                                        description: Total number of purchases
+                                    page:
+                                        type: integer
+                                        description: Current page
+                                    totalPages:
+                                        type: integer
+                                        description: Total number of pages
+                '401':
+                    description: Unauthorized
+        post:
+            tags: [Purchases]
+            summary: Create new purchase order
+            security:
+                - BearerAuth: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/PurchaseCreateRequest'
+            responses:
+                '201':
+                    description: Purchase order created successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Purchase'
+                '400':
+                    description: Validation error
+                '401':
+                    description: Unauthorized
+    /api/v1/purchases/{id}:
+        get:
+            tags: [Purchases]
+            summary: Get purchase by ID
+            security:
+                - BearerAuth: []
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                  description: Purchase ID
+            responses:
+                '200':
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Purchase'
+                '404':
+                    description: Purchase not found
+                '401':
+                    description: Unauthorized
+        put:
+            tags: [Purchases]
+            summary: Update purchase order
+            security:
+                - BearerAuth: []
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                  description: Purchase ID
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/PurchaseUpdateRequest'
+            responses:
+                '200':
+                    description: Purchase order updated successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Purchase'
+                '404':
+                    description: Purchase not found
+                '401':
+                    description: Unauthorized
+        delete:
+            tags: [Purchases]
+            summary: Delete purchase order
+            security:
+                - BearerAuth: []
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                  description: Purchase ID
+            responses:
+                '200':
+                    description: Purchase order deleted successfully
+                '404':
+                    description: Purchase not found
+                '401':
+                    description: Unauthorized
+
+    # Suppliers
+    /api/v1/suppliers:
+        get:
+            tags: [Suppliers]
+            summary: Get all suppliers
+            security:
+                - BearerAuth: []
+            parameters:
+                - name: page
+                  in: query
+                  schema:
+                      type: integer
+                      default: 1
+                  description: Page number
+                - name: limit
+                  in: query
+                  schema:
+                      type: integer
+                      default: 10
+                  description: Items per page
+                - name: search
+                  in: query
+                  schema:
+                      type: string
+                  description: Search by name or business name
+                - name: is_active
+                  in: query
+                  schema:
+                      type: boolean
+                  description: Filter by active status
+            responses:
+                '200':
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    data:
+                                        type: array
+                                        items:
+                                            allOf:
+                                                - $ref: '#/components/schemas/Supplier'
+                                                - type: object
+                                                  properties:
+                                                      contact_numbers:
+                                                          type: array
+                                                          items:
+                                                              $ref: '#/components/schemas/SupplierContactNumber'
+                                    total:
+                                        type: integer
+                                        description: Total number of suppliers
+                                    page:
+                                        type: integer
+                                        description: Current page
+                                    totalPages:
+                                        type: integer
+                                        description: Total number of pages
+                '401':
+                    description: Unauthorized
+        post:
+            tags: [Suppliers]
+            summary: Create new supplier
+            security:
+                - BearerAuth: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/SupplierCreateRequest'
+            responses:
+                '201':
+                    description: Supplier created successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Supplier'
+                '400':
+                    description: Validation error
+                '401':
+                    description: Unauthorized
+    /api/v1/suppliers/{idOrSlug}:
+        get:
+            tags: [Suppliers]
+            summary: Get supplier by ID or slug
+            security:
+                - BearerAuth: []
+            parameters:
+                - name: idOrSlug
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                  description: Supplier ID or slug
+            responses:
+                '200':
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/Supplier'
+                                    - type: object
+                                      properties:
+                                          contact_numbers:
+                                              type: array
+                                              items:
+                                                  $ref: '#/components/schemas/SupplierContactNumber'
+                '404':
+                    description: Supplier not found
+                '401':
+                    description: Unauthorized
+        put:
+            tags: [Suppliers]
+            summary: Update supplier
+            security:
+                - BearerAuth: []
+            parameters:
+                - name: idOrSlug
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                  description: Supplier ID or slug
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/SupplierUpdateRequest'
+            responses:
+                '200':
+                    description: Supplier updated successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Supplier'
+                '404':
+                    description: Supplier not found
+                '401':
+                    description: Unauthorized
+        delete:
+            tags: [Suppliers]
+            summary: Delete supplier
+            security:
+                - BearerAuth: []
+            parameters:
+                - name: idOrSlug
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                  description: Supplier ID or slug
+            responses:
+                '200':
+                    description: Supplier deleted successfully
+                '404':
+                    description: Supplier not found
+                '401':
+                    description: Unauthorized
+
+    # Supplier Contact Numbers
+    /api/v1/supplier-contact-numbers:
+        get:
+            tags: [Supplier Contact Numbers]
+            summary: Get all supplier contact numbers
+            description: 'Access Level: Requires authentication and admin privileges'
+            security:
+                - BearerAuth: []
+            parameters:
+                - name: page
+                  in: query
+                  schema:
+                      type: integer
+                      default: 1
+                  description: Page number
+                - name: limit
+                  in: query
+                  schema:
+                      type: integer
+                      default: 10
+                  description: Items per page
+                - name: supplier_id
+                  in: query
+                  schema:
+                      type: string
+                  description: Filter by supplier ID
+                - name: contact_type
+                  in: query
+                  schema:
+                      type: string
+                      enum: [primary, secondary, emergency, fax]
+                  description: Filter by contact type
+            responses:
+                '200':
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    data:
+                                        type: array
+                                        items:
+                                            $ref: '#/components/schemas/SupplierContactNumber'
+                                    total:
+                                        type: integer
+                                        description: Total number of contact numbers
+                                    page:
+                                        type: integer
+                                        description: Current page
+                                    totalPages:
+                                        type: integer
+                                        description: Total number of pages
+                '401':
+                    description: Unauthorized - Valid JWT token required
+                '403':
+                    description: Forbidden - Admin privileges required
+        post:
+            tags: [Supplier Contact Numbers]
+            summary: Add new contact number for supplier
+            description: 'Access Level: Requires authentication and admin privileges'
+            security:
+                - BearerAuth: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/SupplierContactNumberCreateRequest'
+            responses:
+                '201':
+                    description: Contact number added successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SupplierContactNumber'
+                '400':
+                    description: Validation error
+                '401':
+                    description: Unauthorized - Valid JWT token required
+                '403':
+                    description: Forbidden - Admin privileges required
+    /api/v1/supplier-contact-numbers/{id}:
+        get:
+            tags: [Supplier Contact Numbers]
+            summary: Get contact number by ID
+            description: 'Access Level: Requires authentication and admin privileges'
+            security:
+                - BearerAuth: []
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                  description: Contact number ID
+            responses:
+                '200':
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SupplierContactNumber'
+                '404':
+                    description: Contact number not found
+                '401':
+                    description: Unauthorized - Valid JWT token required
+                '403':
+                    description: Forbidden - Admin privileges required
+        put:
+            tags: [Supplier Contact Numbers]
+            summary: Update contact number
+            description: 'Access Level: Requires authentication and admin privileges'
+            security:
+                - BearerAuth: []
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                  description: Contact number ID
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/SupplierContactNumberUpdateRequest'
+            responses:
+                '200':
+                    description: Contact number updated successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SupplierContactNumber'
+                '404':
+                    description: Contact number not found
+                '401':
+                    description: Unauthorized - Valid JWT token required
+                '403':
+                    description: Forbidden - Admin privileges required
+        delete:
+            tags: [Supplier Contact Numbers]
+            summary: Delete contact number
+            description: 'Access Level: Requires authentication and admin privileges'
+            security:
+                - BearerAuth: []
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                  description: Contact number ID
+            responses:
+                '200':
+                    description: Contact number deleted successfully
+                '404':
+                    description: Contact number not found
+                '401':
+                    description: Unauthorized - Valid JWT token required
+                '403':
+                    description: Forbidden - Admin privileges required
     /api/v1/admin/dashboard:
         get:
             summary: 'Get admin dashboard data'
@@ -280,586 +2109,213 @@ paths:
             security: [{bearerAuth: []}]
             parameters: [{in: query, name: startDate, schema: {type: string, format: date}, description: 'Start date for the report'}, {in: query, name: endDate, schema: {type: string, format: date}, description: 'End date for the report'}, {in: query, name: format, schema: {type: string, enum: [csv, xlsx, json]}, description: 'Export format'}]
             responses: {'200': {description: 'Sales data exported successfully'}, '401': {description: 'Admin authentication required'}}
-    /api/v1/auth/register:
-        post:
-            summary: 'Register a new user'
-            tags: [Authentication]
-            requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/RegisterRequest'}}}}
-            responses: {'201': {description: 'User registered successfully', content: {application/json: {schema: {$ref: '#/components/schemas/AuthResponse'}}}, headers: {Set-Cookie: {schema: {type: string}, description: 'HTTP-only refresh token cookie'}}}, '400': {description: 'Validation error or user already exists', content: {application/json: {schema: {$ref: '#/components/schemas/ErrorResponse'}}}}, '500': {description: 'Internal server error'}}
-    /api/v1/auth/login:
-        post:
-            summary: 'Login user'
-            tags: [Authentication]
-            requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LoginRequest'}}}}
-            responses: {'200': {description: 'Login successful', content: {application/json: {schema: {$ref: '#/components/schemas/AuthResponse'}}}, headers: {Set-Cookie: {schema: {type: string}, description: 'HTTP-only refresh token cookie'}}}, '400': {description: 'Validation error', content: {application/json: {schema: {$ref: '#/components/schemas/ErrorResponse'}}}}, '401': {description: 'Invalid credentials or account deactivated', content: {application/json: {schema: {$ref: '#/components/schemas/ErrorResponse'}}}}, '429': {description: 'Too many login attempts', content: {application/json: {schema: {$ref: '#/components/schemas/ErrorResponse'}}}}}
-    /api/v1/auth/logout:
-        post:
-            summary: 'Logout user'
-            tags: [Authentication]
-            security: [{bearerAuth: []}]
-            responses: {'204': {description: 'Logout successful'}, '401': {description: Unauthorized}}
-    /api/v1/auth/refresh-token:
-        post:
-            summary: 'Refresh access token'
-            tags: [Authentication]
-            description: 'Refresh access token using HTTP-only refresh token cookie'
-            responses: {'200': {description: 'Token refreshed successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, message: {type: string}, accessToken: {type: string}}}}}, headers: {Set-Cookie: {schema: {type: string}, description: 'New HTTP-only refresh token cookie'}}}, '401': {description: 'Invalid or expired refresh token', content: {application/json: {schema: {$ref: '#/components/schemas/ErrorResponse'}}}}}
-    /api/v1/auth/forgot-password:
-        post:
-            summary: 'Request password reset'
-            tags: [Authentication]
-            requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ForgotPasswordRequest'}}}}
-            responses: {'200': {description: 'Password reset email sent (always returns success to prevent email enumeration)', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, message: {type: string}}}}}}, '400': {description: 'Validation error', content: {application/json: {schema: {$ref: '#/components/schemas/ErrorResponse'}}}}, '429': {description: 'Too many password reset requests', content: {application/json: {schema: {$ref: '#/components/schemas/ErrorResponse'}}}}, '500': {description: 'Email service error'}}
-    '/api/v1/auth/reset-password/{token}':
-        post:
-            summary: 'Reset password using token'
-            tags: [Authentication]
-            parameters: [{in: path, name: token, required: true, schema: {type: string}, description: 'Password reset token'}]
-            requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ResetPasswordRequest'}}}}
-            responses: {'200': {description: 'Password reset successful', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, message: {type: string}}}}}}, '400': {description: 'Validation error, passwords don''t match, or invalid/expired token', content: {application/json: {schema: {$ref: '#/components/schemas/ErrorResponse'}}}}, '500': {description: 'Internal server error'}}
-    /api/v1/auth/profile:
-        get:
-            summary: 'Get current user profile'
-            tags: [Authentication]
-            security: [{bearerAuth: []}]
-            responses: {'200': {description: 'Profile retrieved successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, data: {$ref: '#/components/schemas/User'}}}}}}, '401': {description: Unauthorized}}
-    /api/v1/auth/verify-email/request:
-        post:
-            summary: 'Request email verification'
-            tags: [Authentication]
-            security: [{bearerAuth: []}]
-            responses: {'200': {description: 'Verification email sent successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, message: {type: string}}}}}}, '400': {description: 'Email already verified'}, '401': {description: Unauthorized}, '429': {description: 'Rate limit exceeded'}}
-    /api/v1/auth/verify-email/complete:
-        post:
-            summary: 'Complete email verification'
-            tags: [Authentication]
-            requestBody: {required: true, content: {application/json: {schema: {type: object, required: [token], properties: {token: {type: string, description: 'Email verification token'}}}}}}
-            responses: {'200': {description: 'Email verified successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, message: {type: string}}}}}}, '400': {description: 'Invalid or expired token'}}
-    /api/v1/auth/verify-phone/request:
-        post:
-            summary: 'Request phone verification'
-            tags: [Authentication]
-            security: [{bearerAuth: []}]
-            responses: {'200': {description: 'Verification code sent successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, message: {type: string}}}}}}, '400': {description: 'Phone already verified or phone number missing'}, '401': {description: Unauthorized}, '429': {description: 'Rate limit exceeded'}}
-    /api/v1/auth/verify-phone/complete:
-        post:
-            summary: 'Complete phone verification'
-            tags: [Authentication]
-            security: [{bearerAuth: []}]
-            requestBody: {required: true, content: {application/json: {schema: {type: object, required: [otp_code], properties: {otp_code: {type: string, pattern: '^\\d{6}$', description: '6-digit OTP code'}}}}}}
-            responses: {'200': {description: 'Phone verified successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, message: {type: string}}}}}}, '400': {description: 'Invalid or expired OTP code'}, '401': {description: Unauthorized}}
-    /api/v1/brands:
-        post:
-            summary: 'Create a new brand'
-            tags: [Brands]
-            security: [{BearerAuth: []}]
-            requestBody: {required: true, content: {application/json: {schema: {type: object, required: [name], properties: {name: {type: string, minLength: 2, maxLength: 100, example: Nike}, description: {type: string, maxLength: 1000, example: 'Leading athletic footwear and apparel brand'}, logo_url: {type: string, format: uri, example: 'https://example.com/nike-logo.png'}, website: {type: string, format: uri, example: 'https://www.nike.com'}, contact_email: {type: string, format: email, example: info@nike.com}}}}}}
-            responses: {'201': {description: 'Brand created successfully', content: {application/json: {schema: {$ref: '#/components/schemas/BrandResponse'}}}}, '400': {description: 'Validation error or duplicate brand name'}, '401': {description: 'Unauthorized - Admin access required'}, '500': {description: 'Internal server error'}}
-        get:
-            summary: 'Get all brands with filtering and pagination'
-            tags: [Brands]
-            parameters: [{in: query, name: page, schema: {type: integer, minimum: 1, default: 1}, description: 'Page number for pagination'}, {in: query, name: limit, schema: {type: integer, minimum: 1, maximum: 100, default: 10}, description: 'Number of items per page'}, {in: query, name: search, schema: {type: string, maxLength: 100}, description: 'Search in brand name and description'}, {in: query, name: sort, schema: {type: string, enum: [name, createdAt, updatedAt], default: name}, description: 'Sort field'}, {in: query, name: order, schema: {type: string, enum: [asc, desc], default: asc}, description: 'Sort order'}, {in: query, name: is_active, schema: {type: boolean}, description: 'Filter by active status (admin only)'}, {in: query, name: include_inactive, schema: {type: boolean, default: false}, description: 'Include inactive brands (admin only)'}]
-            responses: {'200': {description: 'List of brands retrieved successfully', content: {application/json: {schema: {$ref: '#/components/schemas/BrandsListResponse'}}}}, '400': {description: 'Invalid query parameters'}, '500': {description: 'Internal server error'}}
-    /api/v1/brands/stats:
-        get:
-            summary: 'Get brand statistics'
-            tags: [Brands]
-            security: [{BearerAuth: []}]
-            responses: {'200': {description: 'Brand statistics retrieved successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, data: {type: object, properties: {totalBrands: {type: number}, activeBrands: {type: number}, inactiveBrands: {type: number}, brandsWithLogos: {type: number}, brandsWithWebsites: {type: number}, logoPercentage: {type: string}, websitePercentage: {type: string}}}}}}}}, '401': {description: 'Unauthorized - Admin access required'}, '500': {description: 'Internal server error'}}
-    '/api/v1/brands/{identifier}':
-        get:
-            summary: 'Get a single brand by ID or slug'
-            tags: [Brands]
-            parameters: [{in: path, name: identifier, required: true, schema: {type: string}, description: 'Brand ID or slug', example: nike}]
-            responses: {'200': {description: 'Brand retrieved successfully', content: {application/json: {schema: {$ref: '#/components/schemas/BrandResponse'}}}}, '404': {description: 'Brand not found'}, '500': {description: 'Internal server error'}}
-    '/api/v1/brands/{id}':
-        patch:
-            summary: 'Update a brand'
-            tags: [Brands]
-            security: [{BearerAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'Brand ID'}]
-            requestBody: {required: true, content: {application/json: {schema: {type: object, properties: {name: {type: string, minLength: 2, maxLength: 100}, description: {type: string, maxLength: 1000}, logo_url: {type: string, format: uri}, website: {type: string, format: uri}, contact_email: {type: string, format: email}, is_active: {type: boolean}}}}}}
-            responses: {'200': {description: 'Brand updated successfully', content: {application/json: {schema: {$ref: '#/components/schemas/BrandResponse'}}}}, '400': {description: 'Validation error or duplicate brand name'}, '401': {description: 'Unauthorized - Admin access required'}, '404': {description: 'Brand not found'}, '500': {description: 'Internal server error'}}
-        delete:
-            summary: 'Soft delete a brand'
-            tags: [Brands]
-            security: [{BearerAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'Brand ID'}]
-            responses: {'204': {description: 'Brand deleted successfully'}, '401': {description: 'Unauthorized - Admin access required'}, '404': {description: 'Brand not found'}, '500': {description: 'Internal server error'}}
-    /api/v1/categories:
-        get:
-            summary: 'Get all categories'
-            description: 'Retrieve a paginated list of categories with optional filtering'
-            tags: [Categories]
-            parameters: [{in: query, name: page, schema: {type: integer, minimum: 1, default: 1}, description: 'Page number for pagination'}, {in: query, name: limit, schema: {type: integer, minimum: 1, maximum: 100, default: 10}, description: 'Number of items per page'}, {in: query, name: search, schema: {type: string}, description: 'Search term for category name or description'}, {in: query, name: parent_id, schema: {type: string}, description: 'Filter by parent category ID (use ''null'' for root categories)'}, {in: query, name: sort_by, schema: {type: string, enum: [name, createdAt, updatedAt], default: name}, description: 'Field to sort by'}, {in: query, name: sort_order, schema: {type: string, enum: [asc, desc], default: asc}, description: 'Sort order'}, {in: query, name: include_inactive, schema: {type: boolean, default: false}, description: 'Include inactive categories (admin only)'}]
-            responses: {'200': {description: 'Categories retrieved successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean, example: true}, message: {type: string, example: 'Categories retrieved successfully'}, data: {type: array, items: {$ref: '#/components/schemas/Category'}}, pagination: {$ref: '#/components/schemas/PaginationInfo'}}}}}}, '400': {$ref: '#/components/responses/400'}, '500': {$ref: '#/components/responses/500'}}
-        post:
-            summary: 'Create a new category'
-            description: 'Create a new category (admin only)'
-            tags: [Categories]
-            security: [{bearerAuth: []}]
-            requestBody: {required: true, content: {application/json: {schema: {type: object, required: [name], properties: {name: {type: string, minLength: 1, maxLength: 100, example: Electronics}, description: {type: string, maxLength: 500, example: 'Electronic devices and accessories'}, parent_category: {type: string, description: 'MongoDB ObjectID of parent category', example: 64a1b2c3d4e5f6789abcdef1}, image_url: {type: string, format: uri, example: 'https://example.com/electronics.jpg'}}}}}}
-            responses: {'201': {description: 'Category created successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean, example: true}, message: {type: string, example: 'Category created successfully'}, data: {$ref: '#/components/schemas/Category'}}}}}}, '400': {$ref: '#/components/responses/400'}, '401': {$ref: '#/components/responses/401'}, '403': {$ref: '#/components/responses/403'}, '500': {$ref: '#/components/responses/500'}}
-    /api/v1/categories/tree:
-        get:
-            summary: 'Get category tree'
-            description: 'Retrieve hierarchical category tree structure'
-            tags: [Categories]
-            parameters: [{in: query, name: include_inactive, schema: {type: boolean, default: false}, description: 'Include inactive categories (admin only)'}]
-            responses: {'200': {description: 'Category tree retrieved successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean, example: true}, message: {type: string, example: 'Category tree retrieved successfully'}, data: {type: array, items: {$ref: '#/components/schemas/CategoryTree'}}}}}}}, '500': {$ref: '#/components/responses/500'}}
-    /api/v1/categories/admin/stats:
-        get:
-            summary: 'Get category statistics'
-            description: 'Retrieve category statistics for admin dashboard'
-            tags: [Categories]
-            security: [{bearerAuth: []}]
-            responses: {'200': {description: 'Category statistics retrieved successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean, example: true}, message: {type: string, example: 'Category statistics retrieved successfully'}, data: {$ref: '#/components/schemas/CategoryStats'}}}}}}, '401': {$ref: '#/components/responses/401'}, '403': {$ref: '#/components/responses/403'}, '500': {$ref: '#/components/responses/500'}}
-    '/api/v1/categories/{identifier}':
-        get:
-            summary: 'Get category by ID or slug'
-            description: 'Retrieve a specific category by its ID or slug'
-            tags: [Categories]
-            parameters: [{in: path, name: identifier, required: true, schema: {type: string}, description: 'Category ID or slug', example: electronics}]
-            responses: {'200': {description: 'Category retrieved successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean, example: true}, message: {type: string, example: 'Category retrieved successfully'}, data: {type: object, allOf: [{$ref: '#/components/schemas/Category'}, {type: object, properties: {categoryPath: {type: array, items: {type: object, properties: {name: {type: string}, slug: {type: string}}}, description: 'Breadcrumb path to category'}, subcategories: {type: array, items: {$ref: '#/components/schemas/Category'}, description: 'Direct child categories'}}}]}}}}}}, '404': {$ref: '#/components/responses/404'}, '500': {$ref: '#/components/responses/500'}}
-        put:
-            summary: 'Update category'
-            description: 'Update an existing category (admin only)'
-            tags: [Categories]
-            security: [{bearerAuth: []}]
-            parameters: [{in: path, name: identifier, required: true, schema: {type: string}, description: 'Category ID', example: 64a1b2c3d4e5f6789abcdef2}]
-            requestBody: {required: true, content: {application/json: {schema: {type: object, properties: {name: {type: string, minLength: 1, maxLength: 100, example: 'Updated Electronics'}, description: {type: string, maxLength: 500, example: 'Updated description for electronic devices'}, parent_category: {type: string, description: 'MongoDB ObjectID of parent category', example: 64a1b2c3d4e5f6789abcdef1}, image_url: {type: string, format: uri, example: 'https://example.com/updated-electronics.jpg'}, is_active: {type: boolean, example: true}}}}}}
-            responses: {'200': {description: 'Category updated successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean, example: true}, message: {type: string, example: 'Category updated successfully'}, data: {$ref: '#/components/schemas/Category'}}}}}}, '400': {$ref: '#/components/responses/400'}, '401': {$ref: '#/components/responses/401'}, '403': {$ref: '#/components/responses/403'}, '404': {$ref: '#/components/responses/404'}, '500': {$ref: '#/components/responses/500'}}
-        delete:
-            summary: 'Delete category'
-            description: 'Delete a category (admin only). Soft delete by default, hard delete optional.'
-            tags: [Categories]
-            security: [{bearerAuth: []}]
-            parameters: [{in: path, name: identifier, required: true, schema: {type: string}, description: 'Category ID', example: 64a1b2c3d4e5f6789abcdef2}, {in: query, name: hard_delete, schema: {type: boolean, default: false}, description: 'Perform hard delete (permanent removal)'}]
-            responses: {'204': {description: 'Category deleted successfully'}, '400': {$ref: '#/components/responses/400'}, '401': {$ref: '#/components/responses/401'}, '403': {$ref: '#/components/responses/403'}, '404': {$ref: '#/components/responses/404'}, '500': {$ref: '#/components/responses/500'}}
+    
+    # Inventory Management
     /api/v1/inventory:
         post:
             summary: 'Create a new inventory record'
+            description: 'Create a new inventory record for a base unit product variant'
             tags: [Inventory]
-            security: [{adminAuth: []}]
-            requestBody: {required: true, content: {application/json: {schema: {type: object, required: [product_variant_id], properties: {product_variant_id: {type: string, description: 'ID of the base unit product variant'}, stock_quantity: {type: number, minimum: 0, default: 0, description: 'Initial stock quantity'}, min_stock_level: {type: number, minimum: 0, default: 0, description: 'Minimum stock threshold'}, location: {type: string, maxLength: 200, description: 'Physical storage location'}, notes: {type: string, maxLength: 1000, description: 'Internal notes'}}}}}}
-            responses: {'201': {description: 'Inventory record created successfully'}, '400': {description: 'Validation error or pack variant provided'}, '401': {description: 'Unauthorized - admin access required'}, '500': {description: 'Internal server error'}}
+            security: [{BearerAuth: []}]
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required: [product_variant_id]
+                            properties:
+                                product_variant_id: {type: string, description: 'ID of the base unit product variant'}
+                                stock_quantity: {type: number, minimum: 0, default: 0, description: 'Initial stock quantity'}
+                                min_stock_level: {type: number, minimum: 0, default: 0, description: 'Minimum stock threshold'}
+                                location: {type: string, maxLength: 200, description: 'Physical storage location'}
+                                notes: {type: string, maxLength: 1000, description: 'Internal notes'}
+            responses:
+                '201': {description: 'Inventory record created successfully', content: {application/json: {schema: {$ref: '#/components/schemas/Inventory'}}}}
+                '400': {description: 'Validation error or pack variant provided'}
+                '401': {description: 'Unauthorized - admin access required'}
+                '500': {description: 'Internal server error'}
         get:
-            summary: 'Get all inventory records with pagination and filtering'
+            summary: 'Get all inventory records'
+            description: 'Retrieve all inventory records with pagination and filtering'
             tags: [Inventory]
-            security: [{adminAuth: []}]
-            parameters: [{in: query, name: page, schema: {type: integer, minimum: 1, default: 1}, description: 'Page number for pagination'}, {in: query, name: limit, schema: {type: integer, minimum: 1, maximum: 100, default: 10}, description: 'Number of items per page'}, {in: query, name: is_active, schema: {type: boolean}, description: 'Filter by active status'}, {in: query, name: stock_status, schema: {type: string, enum: [out_of_stock, low_stock, in_stock]}, description: 'Filter by stock status'}, {in: query, name: location, schema: {type: string}, description: 'Filter by location (partial match)'}, {in: query, name: product_id, schema: {type: string}, description: 'Filter by product ID'}, {in: query, name: search, schema: {type: string}, description: 'Search across SKU, location, and notes'}, {in: query, name: include_computed_packs, schema: {type: boolean, default: false}, description: 'Include computed stock for pack variants'}, {in: query, name: sort_by, schema: {type: string, enum: [createdAt, updatedAt, stock_quantity, min_stock_level, last_restock_date], default: createdAt}, description: 'Field to sort by'}, {in: query, name: sort_order, schema: {type: string, enum: [asc, desc], default: desc}, description: 'Sort order'}]
-            responses: {'200': {description: 'Inventory records retrieved successfully'}, '401': {description: 'Unauthorized - admin access required'}, '500': {description: 'Internal server error'}}
-    '/api/v1/inventory/variant/{productVariantId}':
+            security: [{BearerAuth: []}]
+            parameters:
+                - {in: query, name: page, schema: {type: integer, minimum: 1, default: 1}, description: 'Page number for pagination'}
+                - {in: query, name: limit, schema: {type: integer, minimum: 1, maximum: 100, default: 10}, description: 'Number of items per page'}
+                - {in: query, name: is_active, schema: {type: boolean}, description: 'Filter by active status'}
+                - {in: query, name: stock_status, schema: {type: string, enum: [out_of_stock, low_stock, in_stock]}, description: 'Filter by stock status'}
+                - {in: query, name: location, schema: {type: string}, description: 'Filter by location (partial match)'}
+                - {in: query, name: product_id, schema: {type: string}, description: 'Filter by product ID'}
+                - {in: query, name: search, schema: {type: string}, description: 'Search across SKU, location, and notes'}
+                - {in: query, name: include_computed_packs, schema: {type: boolean, default: false}, description: 'Include computed stock for pack variants'}
+                - {in: query, name: sort_by, schema: {type: string, enum: [createdAt, updatedAt, stock_quantity, min_stock_level, last_restock_date], default: createdAt}, description: 'Field to sort by'}
+                - {in: query, name: sort_order, schema: {type: string, enum: [asc, desc], default: desc}, description: 'Sort order'}
+            responses:
+                '200': {description: 'Inventory records retrieved successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, data: {type: array, items: {$ref: '#/components/schemas/Inventory'}}, pagination: {type: object}}}}}}
+                '401': {description: 'Unauthorized - admin access required'}
+                '500': {description: 'Internal server error'}
+    /api/v1/inventory/variant/{productVariantId}:
         get:
-            summary: 'Get inventory by product variant ID (computed stock)'
+            summary: 'Get inventory by product variant ID'
+            description: 'Get inventory record by product variant ID with computed stock'
             tags: [Inventory]
-            security: [{adminAuth: []}]
-            parameters: [{in: path, name: productVariantId, required: true, schema: {type: string}, description: 'Product variant ID (base unit or pack)'}]
-            responses: {'200': {description: 'Inventory record retrieved successfully with computed stock'}, '400': {description: 'Invalid product variant ID'}, '401': {description: 'Unauthorized - admin access required'}, '404': {description: 'Inventory record not found'}, '500': {description: 'Internal server error'}}
-    '/api/v1/inventory/{id}':
+            security: [{BearerAuth: []}]
+            parameters:
+                - {in: path, name: productVariantId, required: true, schema: {type: string}, description: 'Product variant ID (base unit or pack)'}
+            responses:
+                '200': {description: 'Inventory record retrieved successfully with computed stock', content: {application/json: {schema: {$ref: '#/components/schemas/Inventory'}}}}
+                '400': {description: 'Invalid product variant ID'}
+                '401': {description: 'Unauthorized - admin access required'}
+                '404': {description: 'Inventory record not found'}
+                '500': {description: 'Internal server error'}
+    /api/v1/inventory/{id}:
         patch:
             summary: 'Update inventory record'
+            description: 'Update an existing inventory record'
             tags: [Inventory]
-            security: [{adminAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'Inventory record ID'}]
-            requestBody: {required: true, content: {application/json: {schema: {type: object, properties: {stock_quantity: {type: number, minimum: 0, description: 'Updated stock quantity'}, min_stock_level: {type: number, minimum: 0, description: 'Updated minimum stock level'}, location: {type: string, maxLength: 200, description: 'Updated storage location'}, notes: {type: string, maxLength: 1000, description: 'Updated notes'}, is_active: {type: boolean, description: 'Updated active status'}}}}}}
-            responses: {'200': {description: 'Inventory record updated successfully'}, '400': {description: 'Validation error or invalid inventory ID'}, '401': {description: 'Unauthorized - admin access required'}, '404': {description: 'Inventory record not found'}, '500': {description: 'Internal server error'}}
+            security: [{BearerAuth: []}]
+            parameters:
+                - {in: path, name: id, required: true, schema: {type: string}, description: 'Inventory record ID'}
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                stock_quantity: {type: number, minimum: 0, description: 'Updated stock quantity'}
+                                min_stock_level: {type: number, minimum: 0, description: 'Updated minimum stock level'}
+                                location: {type: string, maxLength: 200, description: 'Updated storage location'}
+                                notes: {type: string, maxLength: 1000, description: 'Updated notes'}
+                                is_active: {type: boolean, description: 'Updated active status'}
+            responses:
+                '200': {description: 'Inventory record updated successfully', content: {application/json: {schema: {$ref: '#/components/schemas/Inventory'}}}}
+                '400': {description: 'Validation error or invalid inventory ID'}
+                '401': {description: 'Unauthorized - admin access required'}
+                '404': {description: 'Inventory record not found'}
+                '500': {description: 'Internal server error'}
         delete:
-            summary: 'Delete inventory record (soft delete)'
+            summary: 'Delete inventory record'
+            description: 'Delete inventory record (soft delete)'
             tags: [Inventory]
-            security: [{adminAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'Inventory record ID'}]
-            responses: {'204': {description: 'Inventory record deleted successfully'}, '400': {description: 'Invalid inventory ID'}, '401': {description: 'Unauthorized - admin access required'}, '404': {description: 'Inventory record not found'}, '500': {description: 'Internal server error'}}
+            security: [{BearerAuth: []}]
+            parameters:
+                - {in: path, name: id, required: true, schema: {type: string}, description: 'Inventory record ID'}
+            responses:
+                '204': {description: 'Inventory record deleted successfully'}
+                '400': {description: 'Invalid inventory ID'}
+                '401': {description: 'Unauthorized - admin access required'}
+                '404': {description: 'Inventory record not found'}
+                '500': {description: 'Internal server error'}
+    
+    # Listing Management
     /api/v1/listings:
         post:
             summary: 'Create a new listing'
+            description: 'Create a new product variant listing for a specific platform'
             tags: [Listings]
-            security: [{adminAuth: []}]
-            requestBody: {required: true, content: {application/json: {schema: {type: object, required: [product_variant_id, platform_id], properties: {product_variant_id: {type: string, description: 'ID of the product variant'}, platform_id: {type: string, description: 'ID of the platform'}, platform_sku: {type: string, maxLength: 100}, platform_product_id: {type: string, maxLength: 150}, listing_status: {type: string, enum: [Draft, 'Pending Review', Live, Rejected, Deactivated], default: Draft}, platform_price: {type: number, minimum: 0}, platform_commission_percentage: {type: number, minimum: 0, maximum: 100}, platform_fixed_fee: {type: number, minimum: 0}, platform_shipping_fee: {type: number, minimum: 0}, platform_specific_data: {type: object}, is_active_on_platform: {type: boolean, default: true}}}}}}
-            responses: {'201': {description: 'Listing created successfully'}, '400': {description: 'Validation error or duplicate variant-platform combination'}, '401': {description: 'Unauthorized - admin access required'}, '500': {description: 'Internal server error'}}
+            security: [{BearerAuth: []}]
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required: [product_variant_id, platform_id]
+                            properties:
+                                product_variant_id: {type: string, description: 'ID of the product variant'}
+                                platform_id: {type: string, description: 'ID of the platform'}
+                                platform_sku: {type: string, maxLength: 100, description: 'Platform-specific SKU'}
+                                platform_product_id: {type: string, maxLength: 150, description: 'Platform-specific product ID'}
+                                listing_status: {type: string, enum: [Draft, 'Pending Review', Live, Rejected, Deactivated], default: Draft, description: 'Current status of the listing'}
+                                platform_price: {type: number, minimum: 0, description: 'Price on the platform'}
+                                platform_commission_percentage: {type: number, minimum: 0, maximum: 100, description: 'Commission percentage for this variant'}
+                                platform_fixed_fee: {type: number, minimum: 0, description: 'Fixed fee per sale'}
+                                platform_shipping_fee: {type: number, minimum: 0, description: 'Shipping fee charged by platform'}
+                                platform_specific_data: {type: object, description: 'Platform-specific attributes'}
+                                is_active_on_platform: {type: boolean, default: true, description: 'Whether listing is active on platform'}
+            responses:
+                '201': {description: 'Listing created successfully', content: {application/json: {schema: {$ref: '#/components/schemas/Listing'}}}}
+                '400': {description: 'Validation error or duplicate variant-platform combination'}
+                '401': {description: 'Unauthorized - admin access required'}
+                '500': {description: 'Internal server error'}
         get:
-            summary: 'Get all listings with pagination and filtering'
+            summary: 'Get all listings'
+            description: 'Retrieve all listings with pagination and filtering'
             tags: [Listings]
-            security: [{adminAuth: []}]
-            parameters: [{in: query, name: page, schema: {type: integer, minimum: 1, default: 1}, description: 'Page number for pagination'}, {in: query, name: limit, schema: {type: integer, minimum: 1, maximum: 100, default: 10}, description: 'Number of items per page'}, {in: query, name: platform_id, schema: {type: string}, description: 'Filter by platform ID'}, {in: query, name: product_variant_id, schema: {type: string}, description: 'Filter by product variant ID'}, {in: query, name: listing_status, schema: {type: string, enum: [Draft, 'Pending Review', Live, Rejected, Deactivated]}, description: 'Filter by listing status'}, {in: query, name: is_active_on_platform, schema: {type: boolean}, description: 'Filter by active status'}, {in: query, name: platform_sku, schema: {type: string}, description: 'Filter by platform SKU (partial match)'}, {in: query, name: platform_product_id, schema: {type: string}, description: 'Filter by platform product ID (partial match)'}, {in: query, name: needs_sync, schema: {type: boolean}, description: 'Filter listings that need synchronization'}, {in: query, name: has_price, schema: {type: boolean}, description: 'Filter listings with valid platform price'}, {in: query, name: search, schema: {type: string}, description: 'Search across platform SKU and product ID'}, {in: query, name: sort_by, schema: {type: string, enum: [createdAt, updatedAt, platform_price, listing_status, last_synced_at], default: createdAt}, description: 'Field to sort by'}, {in: query, name: sort_order, schema: {type: string, enum: [asc, desc], default: desc}, description: 'Sort order'}]
-            responses: {'200': {description: 'Listings retrieved successfully'}, '401': {description: 'Unauthorized - admin access required'}, '500': {description: 'Internal server error'}}
-    '/api/v1/listings/{id}':
+            security: [{BearerAuth: []}]
+            parameters:
+                - {in: query, name: page, schema: {type: integer, minimum: 1, default: 1}, description: 'Page number for pagination'}
+                - {in: query, name: limit, schema: {type: integer, minimum: 1, maximum: 100, default: 10}, description: 'Number of items per page'}
+                - {in: query, name: platform_id, schema: {type: string}, description: 'Filter by platform ID'}
+                - {in: query, name: product_variant_id, schema: {type: string}, description: 'Filter by product variant ID'}
+                - {in: query, name: listing_status, schema: {type: string, enum: [Draft, 'Pending Review', Live, Rejected, Deactivated]}, description: 'Filter by listing status'}
+                - {in: query, name: is_active_on_platform, schema: {type: boolean}, description: 'Filter by active status'}
+                - {in: query, name: platform_sku, schema: {type: string}, description: 'Filter by platform SKU (partial match)'}
+                - {in: query, name: platform_product_id, schema: {type: string}, description: 'Filter by platform product ID (partial match)'}
+                - {in: query, name: needs_sync, schema: {type: boolean}, description: 'Filter listings that need synchronization'}
+                - {in: query, name: has_price, schema: {type: boolean}, description: 'Filter listings with valid platform price'}
+                - {in: query, name: search, schema: {type: string}, description: 'Search across platform SKU and product ID'}
+                - {in: query, name: sort_by, schema: {type: string, enum: [createdAt, updatedAt, platform_price, listing_status, last_synced_at], default: createdAt}, description: 'Field to sort by'}
+                - {in: query, name: sort_order, schema: {type: string, enum: [asc, desc], default: desc}, description: 'Sort order'}
+            responses:
+                '200': {description: 'Listings retrieved successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, data: {type: array, items: {$ref: '#/components/schemas/Listing'}}, pagination: {type: object}}}}}}
+                '401': {description: 'Unauthorized - admin access required'}
+                '500': {description: 'Internal server error'}
+    /api/v1/listings/{id}:
         get:
             summary: 'Get listing by ID'
+            description: 'Retrieve a specific listing by its ID'
             tags: [Listings]
-            security: [{adminAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'Listing ID'}]
-            responses: {'200': {description: 'Listing retrieved successfully'}, '400': {description: 'Invalid listing ID'}, '401': {description: 'Unauthorized - admin access required'}, '404': {description: 'Listing not found'}, '500': {description: 'Internal server error'}}
+            security: [{BearerAuth: []}]
+            parameters:
+                - {in: path, name: id, required: true, schema: {type: string}, description: 'Listing ID'}
+            responses:
+                '200': {description: 'Listing retrieved successfully', content: {application/json: {schema: {$ref: '#/components/schemas/Listing'}}}}
+                '400': {description: 'Invalid listing ID'}
+                '401': {description: 'Unauthorized - admin access required'}
+                '404': {description: 'Listing not found'}
+                '500': {description: 'Internal server error'}
         patch:
             summary: 'Update listing'
+            description: 'Update an existing listing'
             tags: [Listings]
-            security: [{adminAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'Listing ID'}]
-            requestBody: {required: true, content: {application/json: {schema: {type: object, properties: {platform_sku: {type: string, maxLength: 100}, platform_product_id: {type: string, maxLength: 150}, listing_status: {type: string, enum: [Draft, 'Pending Review', Live, Rejected, Deactivated]}, platform_price: {type: number, minimum: 0}, platform_commission_percentage: {type: number, minimum: 0, maximum: 100}, platform_fixed_fee: {type: number, minimum: 0}, platform_shipping_fee: {type: number, minimum: 0}, platform_specific_data: {type: object}, is_active_on_platform: {type: boolean}}}}}}
-            responses: {'200': {description: 'Listing updated successfully'}, '400': {description: 'Validation error or invalid listing ID'}, '401': {description: 'Unauthorized - admin access required'}, '404': {description: 'Listing not found'}, '500': {description: 'Internal server error'}}
+            security: [{BearerAuth: []}]
+            parameters:
+                - {in: path, name: id, required: true, schema: {type: string}, description: 'Listing ID'}
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                platform_sku: {type: string, maxLength: 100, description: 'Platform-specific SKU'}
+                                platform_product_id: {type: string, maxLength: 150, description: 'Platform-specific product ID'}
+                                listing_status: {type: string, enum: [Draft, 'Pending Review', Live, Rejected, Deactivated], description: 'Current status of the listing'}
+                                platform_price: {type: number, minimum: 0, description: 'Price on the platform'}
+                                platform_commission_percentage: {type: number, minimum: 0, maximum: 100, description: 'Commission percentage for this variant'}
+                                platform_fixed_fee: {type: number, minimum: 0, description: 'Fixed fee per sale'}
+                                platform_shipping_fee: {type: number, minimum: 0, description: 'Shipping fee charged by platform'}
+                                platform_specific_data: {type: object, description: 'Platform-specific attributes'}
+                                is_active_on_platform: {type: boolean, description: 'Whether listing is active on platform'}
+            responses:
+                '200': {description: 'Listing updated successfully', content: {application/json: {schema: {$ref: '#/components/schemas/Listing'}}}}
+                '400': {description: 'Validation error or invalid listing ID'}
+                '401': {description: 'Unauthorized - admin access required'}
+                '404': {description: 'Listing not found'}
+                '500': {description: 'Internal server error'}
         delete:
-            summary: 'Delete listing (soft delete)'
+            summary: 'Delete listing'
+            description: 'Delete listing (soft delete)'
             tags: [Listings]
-            security: [{adminAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'Listing ID'}]
-            responses: {'204': {description: 'Listing deleted successfully'}, '400': {description: 'Invalid listing ID'}, '401': {description: 'Unauthorized - admin access required'}, '404': {description: 'Listing not found'}, '500': {description: 'Internal server error'}}
-    /api/v1/options:
-        post:
-            summary: 'Create a new option'
-            tags: [Options]
             security: [{BearerAuth: []}]
-            requestBody: {required: true, content: {application/json: {schema: {type: object, required: [option_type, option_value], properties: {option_type: {type: string, maxLength: 50, example: Color}, option_value: {type: string, maxLength: 100, example: Red}, name: {type: string, maxLength: 100, example: 'Bright Red'}, sort_order: {type: number, minimum: 0, example: 1}}}}}}
-            responses: {'201': {description: 'Option created successfully', content: {application/json: {schema: {$ref: '#/components/schemas/OptionResponse'}}}}, '400': {description: 'Validation error or duplicate option'}, '401': {description: 'Unauthorized - Admin access required'}, '500': {description: 'Internal server error'}}
-        get:
-            summary: 'Get all options with filtering and pagination'
-            tags: [Options]
-            parameters: [{in: query, name: page, schema: {type: integer, minimum: 1}, description: 'Page number for pagination'}, {in: query, name: limit, schema: {type: integer, minimum: 1, maximum: 100}, description: 'Number of items per page'}, {in: query, name: option_type, schema: {type: string, maxLength: 50}, description: 'Filter by option type (case-insensitive)'}, {in: query, name: is_active, schema: {type: boolean}, description: 'Filter by active status (admin only)'}, {in: query, name: search, schema: {type: string, maxLength: 100}, description: 'Search in name, option_value, and option_type'}, {in: query, name: sort, schema: {type: string, enum: [option_type, name, sort_order]}, description: 'Sort field'}, {in: query, name: order, schema: {type: string, enum: [asc, desc]}, description: 'Sort order'}, {in: query, name: include_inactive, schema: {type: boolean}, description: 'Include inactive options (admin only)'}]
-            responses: {'200': {description: 'List of options retrieved successfully', content: {application/json: {schema: {$ref: '#/components/schemas/OptionsListResponse'}}}}, '400': {description: 'Invalid query parameters'}, '500': {description: 'Internal server error'}}
-    /api/v1/options/types:
-        get:
-            summary: 'Get all option types with their values'
-            tags: [Options]
-            parameters: [{in: query, name: include_inactive, schema: {type: boolean}, description: 'Include inactive options (admin only)'}]
-            responses: {'200': {description: 'Option types retrieved successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, data: {type: array, items: {$ref: '#/components/schemas/OptionType'}}}}}}}, '500': {description: 'Internal server error'}}
-    /api/v1/options/stats:
-        get:
-            summary: 'Get option statistics'
-            tags: [Options]
-            security: [{BearerAuth: []}]
-            responses: {'200': {description: 'Option statistics retrieved successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, data: {type: object, properties: {totalOptions: {type: number}, activeOptions: {type: number}, inactiveOptions: {type: number}, totalOptionTypes: {type: number}, topOptionTypes: {type: array, items: {type: object, properties: {option_type: {type: string}, count: {type: number}}}}}}}}}}}, '401': {description: 'Unauthorized - Admin access required'}, '500': {description: 'Internal server error'}}
-    '/api/v1/options/{id}':
-        get:
-            summary: 'Get a single option by ID'
-            tags: [Options]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'Option ID'}]
-            responses: {'200': {description: 'Option retrieved successfully', content: {application/json: {schema: {$ref: '#/components/schemas/OptionResponse'}}}}, '400': {description: 'Invalid option ID format'}, '404': {description: 'Option not found'}, '500': {description: 'Internal server error'}}
-        patch:
-            summary: 'Update an option'
-            tags: [Options]
-            security: [{BearerAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'Option ID'}]
-            requestBody: {required: true, content: {application/json: {schema: {type: object, properties: {option_type: {type: string, maxLength: 50}, option_value: {type: string, maxLength: 100}, name: {type: string, maxLength: 100}, is_active: {type: boolean}, sort_order: {type: number, minimum: 0}}}}}}
-            responses: {'200': {description: 'Option updated successfully', content: {application/json: {schema: {$ref: '#/components/schemas/OptionResponse'}}}}, '400': {description: 'Validation error or duplicate option'}, '401': {description: 'Unauthorized - Admin access required'}, '404': {description: 'Option not found'}, '500': {description: 'Internal server error'}}
-        delete:
-            summary: 'Soft delete an option'
-            tags: [Options]
-            security: [{BearerAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'Option ID'}]
-            responses: {'204': {description: 'Option deleted successfully'}, '400': {description: 'Invalid option ID format'}, '401': {description: 'Unauthorized - Admin access required'}, '404': {description: 'Option not found'}, '500': {description: 'Internal server error'}}
-    /api/v1/platforms:
-        post:
-            summary: 'Create a new platform'
-            description: "Creates a new e-commerce platform in the system. Requires admin authentication.\nThe slug is automatically generated from the platform name.\n"
-            tags: [Platforms]
-            security: [{AdminAuth: []}]
-            requestBody: {required: true, content: {application/json: {schema: {type: object, required: [name], properties: {name: {type: string, description: 'Platform name', maxLength: 100, example: 'Amazon India'}, description: {type: string, description: 'Brief description of the platform', maxLength: 500, example: 'India''s largest e-commerce marketplace'}, base_url: {type: string, format: uri, description: 'Main URL of the platform', maxLength: 200, example: 'https://www.amazon.in'}, logo_url: {type: string, format: uri, description: 'URL to the platform''s logo', maxLength: 300, example: 'https://example.com/amazon-logo.png'}, api_credentials_placeholder: {type: string, description: 'Placeholder for API credentials', maxLength: 200, example: 'API credentials configured'}}}}}}
-            responses: {'201': {description: 'Platform created successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean, example: true}, message: {type: string, example: 'Platform created successfully'}, data: {$ref: '#/components/schemas/Platform'}}}}}}, '400': {description: 'Bad request - validation errors or duplicate name', content: {application/json: {schema: {type: object, properties: {success: {type: boolean, example: false}, message: {type: string, example: 'Platform with this name already exists'}, errors: {type: array, items: {type: string}}}}}}}, '401': {description: 'Unauthorized - Admin access required'}, '500': {description: 'Internal server error'}}
-        get:
-            summary: 'Get all platforms'
-            description: "Retrieves a paginated list of platforms with optional filtering and searching.\nSupports filtering by active status and searching by name or description.\n"
-            tags: [Platforms]
-            security: [{AdminAuth: []}]
-            parameters: [{in: query, name: page, schema: {type: integer, minimum: 1, default: 1}, description: 'Page number for pagination'}, {in: query, name: limit, schema: {type: integer, minimum: 1, maximum: 50, default: 10}, description: 'Number of platforms per page'}, {in: query, name: is_active, schema: {type: boolean}, description: 'Filter by active status'}, {in: query, name: search, schema: {type: string, maxLength: 100}, description: 'Search term for name or description'}, {in: query, name: sort, schema: {type: string, enum: [name, createdAt, updatedAt], default: createdAt}, description: 'Field to sort by'}, {in: query, name: order, schema: {type: string, enum: [asc, desc], default: desc}, description: 'Sort order'}]
-            responses: {'200': {description: 'Platforms retrieved successfully', content: {application/json: {schema: {$ref: '#/components/schemas/PlatformList'}}}}, '400': {description: 'Bad request - invalid query parameters'}, '401': {description: 'Unauthorized - Admin access required'}, '500': {description: 'Internal server error'}}
-    '/api/v1/platforms/{identifier}':
-        get:
-            summary: 'Get platform by ID or slug'
-            description: "Retrieves a single platform by its MongoDB ObjectId or slug.\nFirst attempts to find by ID, then falls back to slug if not found.\n"
-            tags: [Platforms]
-            security: [{AdminAuth: []}]
-            parameters: [{in: path, name: identifier, required: true, schema: {type: string}, description: 'Platform ID (ObjectId) or slug', example: 64a7b8c9d0e1f2a3b4c5d6e7}]
-            responses: {'200': {description: 'Platform retrieved successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean, example: true}, data: {$ref: '#/components/schemas/Platform'}}}}}}, '400': {description: 'Bad request - identifier is required'}, '401': {description: 'Unauthorized - Admin access required'}, '404': {description: 'Platform not found'}, '500': {description: 'Internal server error'}}
-    '/api/v1/platforms/{id}':
-        patch:
-            summary: 'Update a platform'
-            description: "Updates an existing platform. Only provided fields will be updated.\nIf the name is changed, the slug will be automatically regenerated.\n"
-            tags: [Platforms]
-            security: [{AdminAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'Platform ID (ObjectId)', example: 64a7b8c9d0e1f2a3b4c5d6e7}]
-            requestBody: {required: true, content: {application/json: {schema: {type: object, properties: {name: {type: string, maxLength: 100, example: 'Amazon India Updated'}, description: {type: string, maxLength: 500, example: 'Updated description'}, base_url: {type: string, format: uri, maxLength: 200, example: 'https://www.amazon.in'}, logo_url: {type: string, format: uri, maxLength: 300, example: 'https://example.com/new-logo.png'}, api_credentials_placeholder: {type: string, maxLength: 200, example: 'Updated API credentials'}, is_active: {type: boolean, example: true}}}}}}
-            responses: {'200': {description: 'Platform updated successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean, example: true}, message: {type: string, example: 'Platform updated successfully'}, data: {$ref: '#/components/schemas/Platform'}}}}}}, '400': {description: 'Bad request - validation errors or invalid ID'}, '401': {description: 'Unauthorized - Admin access required'}, '404': {description: 'Platform not found'}, '500': {description: 'Internal server error'}}
-        delete:
-            summary: 'Delete a platform (soft delete)'
-            description: "Soft deletes a platform by setting is_active to false.\nThe platform record is not physically removed from the database.\n"
-            tags: [Platforms]
-            security: [{AdminAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'Platform ID (ObjectId)', example: 64a7b8c9d0e1f2a3b4c5d6e7}]
-            responses: {'204': {description: 'Platform deleted successfully (no content)'}, '400': {description: 'Bad request - invalid platform ID format'}, '401': {description: 'Unauthorized - Admin access required'}, '404': {description: 'Platform not found'}, '500': {description: 'Internal server error'}}
-    /api/v1/platform-fees:
-        post:
-            summary: 'Create a new platform fee'
-            tags: ['Platform Fees']
-            security: [{adminAuth: []}]
-            requestBody: {required: true, content: {application/json: {schema: {type: object, required: [platform_id, fee_type, value], properties: {platform_id: {type: string, description: 'ID of the platform'}, fee_type: {type: string, enum: ['Commission Percentage', 'Fixed Listing Fee', 'Payment Gateway Fee', 'Shipping Fee', 'Storage Fee', Other]}, description: {type: string, maxLength: 500}, value: {type: number, minimum: 0, description: 'Fee value'}, is_percentage: {type: boolean, default: false}, effective_date: {type: string, format: date-time}, end_date: {type: string, format: date-time}}}}}}
-            responses: {'201': {description: 'Platform fee created successfully'}, '400': {description: 'Validation error or invalid platform ID'}, '401': {description: 'Unauthorized - admin access required'}, '500': {description: 'Internal server error'}}
-        get:
-            summary: 'Get all platform fees with pagination and filtering'
-            tags: ['Platform Fees']
-            security: [{adminAuth: []}]
-            parameters: [{in: query, name: page, schema: {type: integer, minimum: 1, default: 1}, description: 'Page number for pagination'}, {in: query, name: limit, schema: {type: integer, minimum: 1, maximum: 100, default: 10}, description: 'Number of items per page'}, {in: query, name: platform_id, schema: {type: string}, description: 'Filter by platform ID'}, {in: query, name: fee_type, schema: {type: string, enum: ['Commission Percentage', 'Fixed Listing Fee', 'Payment Gateway Fee', 'Shipping Fee', 'Storage Fee', Other]}, description: 'Filter by fee type'}, {in: query, name: is_active, schema: {type: boolean}, description: 'Filter by active status'}, {in: query, name: is_currently_active, schema: {type: boolean}, description: 'Filter by current activity (within date range)'}, {in: query, name: effective_date_from, schema: {type: string, format: date}, description: 'Filter fees effective from this date'}, {in: query, name: effective_date_to, schema: {type: string, format: date}, description: 'Filter fees effective until this date'}, {in: query, name: end_date_from, schema: {type: string, format: date}, description: 'Filter fees ending from this date'}, {in: query, name: end_date_to, schema: {type: string, format: date}, description: 'Filter fees ending until this date'}, {in: query, name: sort_by, schema: {type: string, enum: [createdAt, updatedAt, effective_date, value, fee_type], default: createdAt}, description: 'Field to sort by'}, {in: query, name: sort_order, schema: {type: string, enum: [asc, desc], default: desc}, description: 'Sort order'}]
-            responses: {'200': {description: 'Platform fees retrieved successfully'}, '401': {description: 'Unauthorized - admin access required'}, '500': {description: 'Internal server error'}}
-    '/api/v1/platform-fees/{id}':
-        get:
-            summary: 'Get platform fee by ID'
-            tags: ['Platform Fees']
-            security: [{adminAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'Platform fee ID'}]
-            responses: {'200': {description: 'Platform fee retrieved successfully'}, '400': {description: 'Invalid platform fee ID'}, '401': {description: 'Unauthorized - admin access required'}, '404': {description: 'Platform fee not found'}, '500': {description: 'Internal server error'}}
-        patch:
-            summary: 'Update platform fee'
-            tags: ['Platform Fees']
-            security: [{adminAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'Platform fee ID'}]
-            requestBody: {required: true, content: {application/json: {schema: {type: object, properties: {platform_id: {type: string}, fee_type: {type: string, enum: ['Commission Percentage', 'Fixed Listing Fee', 'Payment Gateway Fee', 'Shipping Fee', 'Storage Fee', Other]}, description: {type: string, maxLength: 500}, value: {type: number, minimum: 0}, is_percentage: {type: boolean}, effective_date: {type: string, format: date-time}, end_date: {type: string, format: date-time}, is_active: {type: boolean}}}}}}
-            responses: {'200': {description: 'Platform fee updated successfully'}, '400': {description: 'Validation error or invalid platform fee ID'}, '401': {description: 'Unauthorized - admin access required'}, '404': {description: 'Platform fee not found'}, '500': {description: 'Internal server error'}}
-        delete:
-            summary: 'Delete platform fee (soft delete)'
-            tags: ['Platform Fees']
-            security: [{adminAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'Platform fee ID'}]
-            responses: {'204': {description: 'Platform fee deleted successfully'}, '400': {description: 'Invalid platform fee ID'}, '401': {description: 'Unauthorized - admin access required'}, '404': {description: 'Platform fee not found'}, '500': {description: 'Internal server error'}}
-    /api/v1/products:
-        post:
-            summary: 'Create a new product'
-            tags: [Products]
-            security: [{bearerAuth: []}]
-            requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ProductCreateRequest'}}}}
-            responses: {'201': {description: 'Product created successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, message: {type: string}, data: {$ref: '#/components/schemas/Product'}}}}}}, '400': {description: 'Validation error or duplicate product'}, '401': {description: 'Unauthorized - Admin access required'}, '403': {description: 'Forbidden - Admin access required'}}
-        get:
-            summary: 'Get all products with pagination and filtering'
-            tags: [Products]
-            parameters: [{in: query, name: page, schema: {type: integer, minimum: 1, default: 1}, description: 'Page number'}, {in: query, name: limit, schema: {type: integer, minimum: 1, maximum: 100, default: 10}, description: 'Number of items per page'}, {in: query, name: category_id, schema: {type: string}, description: 'Filter by category ID'}, {in: query, name: brand_id, schema: {type: string}, description: 'Filter by brand ID'}, {in: query, name: search, schema: {type: string}, description: 'Search in product name and description'}, {in: query, name: sort, schema: {type: string, enum: [name, createdAt, score, updatedAt], default: createdAt}, description: 'Sort field'}, {in: query, name: order, schema: {type: string, enum: [asc, desc], default: desc}, description: 'Sort order'}, {in: query, name: include_inactive, schema: {type: boolean, default: false}, description: 'Include inactive products (admin only)'}]
-            responses: {'200': {description: 'Products retrieved successfully', content: {application/json: {schema: {$ref: '#/components/schemas/PaginatedProducts'}}}}}
-    /api/v1/products/stats:
-        get:
-            summary: 'Get product statistics'
-            tags: [Products]
-            security: [{bearerAuth: []}]
-            responses: {'200': {description: 'Product statistics retrieved successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, data: {$ref: '#/components/schemas/ProductStats'}}}}}}, '401': {description: 'Unauthorized - Admin access required'}, '403': {description: 'Forbidden - Admin access required'}}
-    '/api/v1/products/{identifier}':
-        get:
-            summary: 'Get a product by ID or slug'
-            tags: [Products]
-            parameters: [{in: path, name: identifier, required: true, schema: {type: string}, description: 'Product ID or slug'}]
-            responses: {'200': {description: 'Product retrieved successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, data: {$ref: '#/components/schemas/Product'}}}}}}, '404': {description: 'Product not found'}}
-    '/api/v1/products/{id}':
-        patch:
-            summary: 'Update a product'
-            tags: [Products]
-            security: [{bearerAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'Product ID'}]
-            requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ProductUpdateRequest'}}}}
-            responses: {'200': {description: 'Product updated successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, message: {type: string}, data: {$ref: '#/components/schemas/Product'}}}}}}, '400': {description: 'Validation error or duplicate product'}, '401': {description: 'Unauthorized - Admin access required'}, '403': {description: 'Forbidden - Admin access required'}, '404': {description: 'Product not found'}}
-        delete:
-            summary: 'Soft delete a product'
-            tags: [Products]
-            security: [{bearerAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'Product ID'}]
-            responses: {'204': {description: 'Product deleted successfully'}, '401': {description: 'Unauthorized - Admin access required'}, '403': {description: 'Forbidden - Admin access required'}, '404': {description: 'Product not found'}}
-    /api/v1/product-variants:
-        post:
-            summary: 'Create a new product variant'
-            tags: ['Product Variants']
-            security: [{BearerAuth: []}]
-            requestBody: {required: true, content: {application/json: {schema: {type: object, required: [product_id, sku_code, price], properties: {product_id: {type: string, example: 60d0fe4f5311236168a109ca}, option_values: {type: array, items: {type: string}, example: [60d0fe4f5311236168a109cc, 60d0fe4f5311236168a109cd]}, sku_code: {type: string, example: TSH-RED-L}, price: {type: number, example: 29.99}, discount_details: {$ref: '#/components/schemas/DiscountDetails'}, dimensions: {$ref: '#/components/schemas/Dimensions'}, weight: {$ref: '#/components/schemas/Weight'}, packaging_cost: {type: number, example: 1.5}, shipping_cost: {type: number, example: 5}, images: {type: array, items: {type: string}, example: ['https://example.com/image.jpg']}}}}}}
-            responses: {'201': {description: 'Product variant created successfully', content: {application/json: {schema: {$ref: '#/components/schemas/ProductVariantResponse'}}}}, '400': {description: 'Validation error or duplicate SKU'}, '401': {description: 'Unauthorized - Admin access required'}, '500': {description: 'Internal server error'}}
-        get:
-            summary: 'Get all product variants with filtering and pagination'
-            tags: ['Product Variants']
-            parameters: [{in: query, name: page, schema: {type: integer, minimum: 1}, description: 'Page number for pagination'}, {in: query, name: limit, schema: {type: integer, minimum: 1, maximum: 100}, description: 'Number of items per page'}, {in: query, name: product_id, schema: {type: string}, description: 'Filter by product ID'}, {in: query, name: is_active, schema: {type: boolean}, description: 'Filter by active status (admin only)'}, {in: query, name: is_on_sale, schema: {type: boolean}, description: 'Filter variants on sale'}, {in: query, name: min_price, schema: {type: number}, description: 'Minimum price filter'}, {in: query, name: max_price, schema: {type: number}, description: 'Maximum price filter'}, {in: query, name: search, schema: {type: string}, description: 'Search in SKU codes'}, {in: query, name: sort, schema: {type: string, enum: [price, sku_code, createdAt, sort_order]}, description: 'Sort field'}, {in: query, name: order, schema: {type: string, enum: [asc, desc]}, description: 'Sort order'}, {in: query, name: include_inactive, schema: {type: boolean}, description: 'Include inactive variants (admin only)'}]
-            responses: {'200': {description: 'List of product variants retrieved successfully', content: {application/json: {schema: {$ref: '#/components/schemas/ProductVariantsListResponse'}}}}, '400': {description: 'Invalid query parameters'}, '500': {description: 'Internal server error'}}
-    /api/v1/product-variants/stats:
-        get:
-            summary: 'Get product variant statistics'
-            tags: ['Product Variants']
-            security: [{BearerAuth: []}]
-            responses: {'200': {description: 'Product variant statistics retrieved successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, data: {type: object, properties: {totalVariants: {type: number}, activeVariants: {type: number}, inactiveVariants: {type: number}, onSaleVariants: {type: number}, priceStatistics: {type: object, properties: {avgPrice: {type: number}, minPrice: {type: number}, maxPrice: {type: number}}}, topProductsByVariants: {type: array, items: {type: object, properties: {product_id: {type: string}, product_name: {type: string}, variant_count: {type: number}}}}}}}}}}}, '401': {description: 'Unauthorized - Admin access required'}, '500': {description: 'Internal server error'}}
-    '/api/v1/product-variants/{identifier}':
-        get:
-            summary: 'Get a single product variant by ID or SKU code'
-            tags: ['Product Variants']
-            parameters: [{in: path, name: identifier, required: true, schema: {type: string}, description: 'Variant ID or SKU code'}]
-            responses: {'200': {description: 'Product variant retrieved successfully', content: {application/json: {schema: {$ref: '#/components/schemas/ProductVariantResponse'}}}}, '404': {description: 'Product variant not found'}, '500': {description: 'Internal server error'}}
-    '/api/v1/product-variants/{id}':
-        patch:
-            summary: 'Update a product variant'
-            tags: ['Product Variants']
-            security: [{BearerAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'Variant ID'}]
-            requestBody: {required: true, content: {application/json: {schema: {type: object, properties: {sku_code: {type: string}, price: {type: number}, discount_details: {$ref: '#/components/schemas/DiscountDetails'}, dimensions: {$ref: '#/components/schemas/Dimensions'}, weight: {$ref: '#/components/schemas/Weight'}, packaging_cost: {type: number}, shipping_cost: {type: number}, images: {type: array, items: {type: string}}, is_active: {type: boolean}, sort_order: {type: number}}}}}}
-            responses: {'200': {description: 'Product variant updated successfully', content: {application/json: {schema: {$ref: '#/components/schemas/ProductVariantResponse'}}}}, '400': {description: 'Validation error or duplicate SKU'}, '401': {description: 'Unauthorized - Admin access required'}, '404': {description: 'Product variant not found'}, '500': {description: 'Internal server error'}}
-        delete:
-            summary: 'Soft delete a product variant'
-            tags: ['Product Variants']
-            security: [{BearerAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'Variant ID'}]
-            responses: {'204': {description: 'Product variant deleted successfully'}, '401': {description: 'Unauthorized - Admin access required'}, '404': {description: 'Product variant not found'}, '500': {description: 'Internal server error'}}
-    /api/v1/suppliers:
-        post:
-            summary: 'Create a new supplier'
-            tags: [Suppliers]
-            security: [{bearerAuth: []}]
-            requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/Supplier'}}}}
-            responses: {'201': {description: 'Supplier created successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, message: {type: string}, data: {$ref: '#/components/schemas/Supplier'}}}}}}, '400': {description: 'Validation error or duplicate supplier'}, '401': {description: 'Unauthorized - Admin access required'}}
-        get:
-            summary: 'Get all suppliers with pagination, filtering, and search'
-            tags: [Suppliers]
-            security: [{bearerAuth: []}]
-            parameters: [{in: query, name: page, schema: {type: integer, minimum: 1, default: 1}, description: 'Page number'}, {in: query, name: limit, schema: {type: integer, minimum: 1, maximum: 100, default: 10}, description: 'Items per page'}, {in: query, name: status, schema: {type: string, enum: [Active, Inactive, 'On Hold', 'Pending Approval']}, description: 'Filter by supplier status'}, {in: query, name: country, schema: {type: string}, description: 'Filter by country'}, {in: query, name: product_categories_supplied, schema: {type: string}, description: 'Filter by category ID'}, {in: query, name: search, schema: {type: string}, description: 'Search in name, description, email'}, {in: query, name: sort, schema: {type: string, enum: [name, createdAt, rating, status], default: createdAt}, description: 'Sort field'}, {in: query, name: order, schema: {type: string, enum: [asc, desc], default: desc}, description: 'Sort order'}, {in: query, name: include_inactive, schema: {type: boolean, default: false}, description: 'Include inactive suppliers (admin only)'}]
-            responses: {'200': {description: 'Suppliers retrieved successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, data: {type: array, items: {$ref: '#/components/schemas/Supplier'}}, pagination: {type: object, properties: {currentPage: {type: integer}, totalPages: {type: integer}, totalItems: {type: integer}, itemsPerPage: {type: integer}, hasNextPage: {type: boolean}, hasPrevPage: {type: boolean}}}}}}}}}
-    /api/v1/suppliers/stats:
-        get:
-            summary: 'Get supplier statistics'
-            tags: [Suppliers]
-            security: [{bearerAuth: []}]
-            responses: {'200': {description: 'Supplier statistics retrieved successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, data: {type: object, properties: {overview: {type: object, properties: {totalSuppliers: {type: integer}, activeSuppliers: {type: integer}, inactiveSuppliers: {type: integer}, averageRating: {type: number}}}, statusBreakdown: {type: array, items: {type: object, properties: {_id: {type: string}, count: {type: integer}}}}, topCountries: {type: array, items: {type: object, properties: {_id: {type: string}, count: {type: integer}}}}}}}}}}}, '401': {description: 'Unauthorized - Admin access required'}}
-    '/api/v1/suppliers/{identifier}':
-        get:
-            summary: 'Get a supplier by ID or slug'
-            tags: [Suppliers]
-            parameters: [{in: path, name: identifier, required: true, schema: {type: string}, description: 'Supplier ID or slug'}]
-            responses: {'200': {description: 'Supplier retrieved successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, data: {$ref: '#/components/schemas/Supplier'}}}}}}, '404': {description: 'Supplier not found'}}
-    '/api/v1/suppliers/{id}':
-        patch:
-            summary: 'Update a supplier'
-            tags: [Suppliers]
-            security: [{bearerAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'Supplier ID'}]
-            requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/Supplier'}}}}
-            responses: {'200': {description: 'Supplier updated successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, message: {type: string}, data: {$ref: '#/components/schemas/Supplier'}}}}}}, '400': {description: 'Validation error'}, '401': {description: 'Unauthorized - Admin access required'}, '404': {description: 'Supplier not found'}}
-        delete:
-            summary: 'Soft delete a supplier'
-            tags: [Suppliers]
-            security: [{bearerAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'Supplier ID'}]
-            responses: {'204': {description: 'Supplier deleted successfully'}, '401': {description: 'Unauthorized - Admin access required'}, '404': {description: 'Supplier not found'}}
-    /api/v1/supplier-contact-numbers:
-        post:
-            summary: 'Create a new supplier contact number'
-            tags: ['Supplier Contact Numbers']
-            security: [{bearerAuth: []}]
-            requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/SupplierContactNumber'}}}}
-            responses: {'201': {description: 'Supplier contact number created successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, message: {type: string}, data: {$ref: '#/components/schemas/SupplierContactNumber'}}}}}}, '400': {description: 'Validation error or duplicate contact number'}, '401': {description: 'Unauthorized - Admin access required'}}
-        get:
-            summary: 'Get all supplier contact numbers with pagination and filtering'
-            tags: ['Supplier Contact Numbers']
-            security: [{bearerAuth: []}]
-            parameters: [{in: query, name: page, schema: {type: integer, minimum: 1, default: 1}, description: 'Page number'}, {in: query, name: limit, schema: {type: integer, minimum: 1, maximum: 100, default: 10}, description: 'Items per page'}, {in: query, name: supplier_id, schema: {type: string}, description: 'Filter by supplier ID'}, {in: query, name: is_primary, schema: {type: boolean}, description: 'Filter by primary contact flag'}, {in: query, name: type, schema: {type: string, enum: [Mobile, Landline, Fax, Whatsapp, Toll-Free, Other]}, description: 'Filter by contact type'}, {in: query, name: search, schema: {type: string}, description: 'Search in contact number or contact name'}, {in: query, name: sort, schema: {type: string, enum: [supplier_id, contact_name, is_primary, createdAt, type], default: supplier_id}, description: 'Sort field'}, {in: query, name: order, schema: {type: string, enum: [asc, desc], default: asc}, description: 'Sort order'}, {in: query, name: include_inactive, schema: {type: boolean, default: false}, description: 'Include inactive contact numbers'}]
-            responses: {'200': {description: 'Contact numbers retrieved successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, data: {type: array, items: {$ref: '#/components/schemas/SupplierContactNumber'}}, pagination: {type: object, properties: {currentPage: {type: integer}, totalPages: {type: integer}, totalItems: {type: integer}, itemsPerPage: {type: integer}, hasNextPage: {type: boolean}, hasPrevPage: {type: boolean}}}}}}}}, '401': {description: 'Unauthorized - Admin access required'}}
-    '/api/v1/supplier-contact-numbers/supplier/{supplierId}':
-        get:
-            summary: 'Get contact numbers for a specific supplier'
-            tags: ['Supplier Contact Numbers']
-            security: [{bearerAuth: []}]
-            parameters: [{in: path, name: supplierId, required: true, schema: {type: string}, description: 'Supplier ID'}, {in: query, name: include_inactive, schema: {type: boolean, default: false}, description: 'Include inactive contact numbers'}]
-            responses: {'200': {description: 'Contact numbers retrieved successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, data: {type: array, items: {$ref: '#/components/schemas/SupplierContactNumber'}}, supplier: {type: object, properties: {_id: {type: string}, name: {type: string}, slug: {type: string}, email: {type: string}}}}}}}}, '401': {description: 'Unauthorized - Admin access required'}, '404': {description: 'Supplier not found'}}
-    '/api/v1/supplier-contact-numbers/{id}':
-        get:
-            summary: 'Get a supplier contact number by ID'
-            tags: ['Supplier Contact Numbers']
-            security: [{bearerAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'Contact number ID'}]
-            responses: {'200': {description: 'Contact number retrieved successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, data: {$ref: '#/components/schemas/SupplierContactNumber'}}}}}}, '401': {description: 'Unauthorized - Admin access required'}, '404': {description: 'Contact number not found'}}
-        patch:
-            summary: 'Update a supplier contact number'
-            tags: ['Supplier Contact Numbers']
-            security: [{bearerAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'Contact number ID'}]
-            requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/SupplierContactNumber'}}}}
-            responses: {'200': {description: 'Contact number updated successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, message: {type: string}, data: {$ref: '#/components/schemas/SupplierContactNumber'}}}}}}, '400': {description: 'Validation error'}, '401': {description: 'Unauthorized - Admin access required'}, '404': {description: 'Contact number not found'}}
-        delete:
-            summary: 'Soft delete a supplier contact number'
-            tags: ['Supplier Contact Numbers']
-            security: [{bearerAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'Contact number ID'}]
-            responses: {'204': {description: 'Contact number deleted successfully'}, '401': {description: 'Unauthorized - Admin access required'}, '404': {description: 'Contact number not found'}}
-    '/api/v1/supplier-contact-numbers/{id}/set-primary':
-        patch:
-            summary: 'Set a contact number as primary for its supplier'
-            tags: ['Supplier Contact Numbers']
-            security: [{bearerAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'Contact number ID'}]
-            responses: {'200': {description: 'Contact number set as primary successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, message: {type: string}, data: {$ref: '#/components/schemas/SupplierContactNumber'}}}}}}, '401': {description: 'Unauthorized - Admin access required'}, '404': {description: 'Contact number not found'}}
-    /api/v1/users:
-        post:
-            summary: 'Create a new user (Registration)'
-            tags: [Users]
-            requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/UserCreateRequest'}}}}
-            responses: {'201': {description: 'User created successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, message: {type: string}, data: {$ref: '#/components/schemas/User'}}}}}}, '400': {description: 'User already exists or validation error'}, '500': {description: 'Internal server error'}}
-        get:
-            summary: 'Get all users with advanced search, filtering, and pagination'
-            tags: [Users]
-            security: [{bearerAuth: []}]
-            parameters: [{in: query, name: page, schema: {type: integer, default: 1}, description: 'Page number'}, {in: query, name: limit, schema: {type: integer, default: 10}, description: 'Items per page'}, {in: query, name: search, schema: {type: string}, description: 'Search term (name, email, phone, address)'}, {in: query, name: role, schema: {type: string, enum: [user, admin]}, description: 'Filter by role'}, {in: query, name: is_active, schema: {type: boolean}, description: 'Filter by active status (admin only for inactive)'}, {in: query, name: min_createdAt, schema: {type: string, format: date-time}, description: 'Minimum creation date'}, {in: query, name: max_createdAt, schema: {type: string, format: date-time}, description: 'Maximum creation date'}, {in: query, name: min_lastLoginAt, schema: {type: string, format: date-time}, description: 'Minimum last login date'}, {in: query, name: max_lastLoginAt, schema: {type: string, format: date-time}, description: 'Maximum last login date'}, {in: query, name: sort, schema: {type: string, default: createdAt}, description: 'Sort field'}, {in: query, name: order, schema: {type: string, enum: [asc, desc], default: desc}, description: 'Sort order'}]
-            responses: {'200': {description: 'List of users retrieved successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, data: {type: array, items: {$ref: '#/components/schemas/User'}}, pagination: {type: object, properties: {currentPage: {type: integer}, totalPages: {type: integer}, totalItems: {type: integer}, itemsPerPage: {type: integer}, hasNextPage: {type: boolean}, hasPreviousPage: {type: boolean}}}}}}}}, '401': {description: Unauthorized}, '403': {description: Forbidden}, '500': {description: 'Internal server error'}}
-    '/api/v1/users/{id}':
-        get:
-            summary: 'Get user by ID'
-            tags: [Users]
-            security: [{bearerAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'User ID'}]
-            responses: {'200': {description: 'User retrieved successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, data: {$ref: '#/components/schemas/User'}}}}}}, '401': {description: Unauthorized}, '403': {description: Forbidden}, '404': {description: 'User not found'}, '500': {description: 'Internal server error'}}
-        patch:
-            summary: 'Update user profile'
-            tags: [Users]
-            security: [{bearerAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'User ID'}]
-            requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/UserUpdateRequest'}}}}
-            responses: {'200': {description: 'User updated successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, message: {type: string}, data: {$ref: '#/components/schemas/User'}}}}}}, '401': {description: Unauthorized}, '403': {description: Forbidden}, '404': {description: 'User not found'}, '500': {description: 'Internal server error'}}
-        delete:
-            summary: 'Delete user (soft delete by default, hard delete option for admin)'
-            tags: [Users]
-            security: [{bearerAuth: []}]
-            parameters: [{in: path, name: id, required: true, schema: {type: string}, description: 'User ID'}, {in: query, name: hard_delete, schema: {type: boolean, default: false}, description: 'Perform hard delete (admin only)'}]
-            responses: {'204': {description: 'User deleted successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, message: {type: string}}}}}}, '401': {description: Unauthorized}, '403': {description: Forbidden}, '404': {description: 'User not found'}, '500': {description: 'Internal server error'}}
-    /api/v1/admin/users/trends/registrations:
-        get:
-            summary: 'Get user registration trends (Admin only)'
-            tags: [Users]
-            security: [{bearerAuth: []}]
-            parameters: [{in: query, name: period, schema: {type: string, enum: [daily, weekly, monthly, yearly], default: daily}, description: 'Time period for grouping'}, {in: query, name: startDate, schema: {type: string, format: date}, description: 'Start date for analysis'}, {in: query, name: endDate, schema: {type: string, format: date}, description: 'End date for analysis'}]
-            responses: {'200': {description: 'Registration trends retrieved successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, data: {type: array, items: {type: object, properties: {date: {type: string}, count: {type: integer}}}}}}}}}, '401': {description: Unauthorized}, '403': {description: 'Forbidden - Admin only'}, '500': {description: 'Internal server error'}}
-    /api/v1/admin/users/trends/active:
-        get:
-            summary: 'Get active users count (Admin only)'
-            tags: [Users]
-            security: [{bearerAuth: []}]
-            parameters: [{in: query, name: lastActivityDays, schema: {type: integer, default: 30}, description: 'Number of days to consider for activity'}]
-            responses: {'200': {description: 'Active users count retrieved successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, data: {type: object, properties: {activeUsers: {type: integer}, period: {type: string}, thresholdDate: {type: string, format: date-time}}}}}}}}, '401': {description: Unauthorized}, '403': {description: 'Forbidden - Admin only'}, '500': {description: 'Internal server error'}}
-    /api/v1/admin/users/trends/top-activity:
-        get:
-            summary: 'Get top users by activity (Admin only)'
-            tags: [Users]
-            security: [{bearerAuth: []}]
-            parameters: [{in: query, name: type, schema: {type: string, enum: [logins, orders, reviews], default: logins}, description: 'Type of activity to analyze'}, {in: query, name: limit, schema: {type: integer, default: 10}, description: 'Number of top users to return'}]
-            responses: {'200': {description: 'Top users by activity retrieved successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, data: {type: array, items: {type: object, properties: {_id: {type: string}, name: {type: string}, email: {type: string}, lastLogin: {type: string, format: date-time}, loginCount: {type: integer}}}}}}}}}, '401': {description: Unauthorized}, '403': {description: 'Forbidden - Admin only'}, '500': {description: 'Internal server error'}}
-    /api/v1/admin/users/trends/roles:
-        get:
-            summary: 'Get user role distribution (Admin only)'
-            tags: [Users]
-            security: [{bearerAuth: []}]
-            responses: {'200': {description: 'Role distribution retrieved successfully', content: {application/json: {schema: {type: object, properties: {success: {type: boolean}, data: {type: object, properties: {user: {type: integer}, admin: {type: integer}}}}}}}}, '401': {description: Unauthorized}, '403': {description: 'Forbidden - Admin only'}, '500': {description: 'Internal server error'}}
-    /health:
-        get:
-            summary: 'Health check endpoint'
-            description: "Returns the current health status of the API server. This endpoint is \nuseful for monitoring systems, load balancers, and automated health checks.\n\nThe response includes:\n- Server status\n- Current timestamp\n- Server uptime in seconds\n- Current environment\n"
-            tags: [Health]
-            responses: {'200': {description: 'Server is healthy and operational', content: {application/json: {schema: {type: object, properties: {status: {type: string, example: OK}, timestamp: {type: string, format: date-time, example: '2025-07-12T10:30:00.000Z'}, uptime: {type: number, description: 'Server uptime in seconds', example: 3600.5}, environment: {type: string, example: development}}}, examples: {healthy: {summary: 'Healthy server response', value: {status: OK, timestamp: '2025-07-12T10:30:00.000Z', uptime: 3600.5, environment: development}}}}}}, '500': {$ref: '#/components/responses/500'}}
-    /api/v1/csrf-token:
-        get:
-            summary: 'Get CSRF token'
-            description: "Returns a CSRF token that must be included in subsequent requests that modify data.\nThis endpoint is used by client applications to obtain a valid CSRF token for \nprotection against Cross-Site Request Forgery attacks.\n\nThe token should be included in the `X-CSRF-Token` header for all \nPOST, PUT, PATCH, and DELETE requests.\n"
-            tags: [Authentication]
-            responses: {'200': {description: 'CSRF token retrieved successfully', content: {application/json: {schema: {type: object, properties: {csrfToken: {type: string, description: 'The CSRF token to be used in subsequent requests', example: a4f8b2c1-9d3e-4f5a-8b7c-1e2d3f4a5b6c}}}, examples: {success: {summary: 'Successful CSRF token response', value: {csrfToken: a4f8b2c1-9d3e-4f5a-8b7c-1e2d3f4a5b6c}}}}}}, '500': {$ref: '#/components/responses/500'}}
-    /:
-        get:
-            summary: 'Welcome endpoint'
-            description: "Basic welcome endpoint that provides information about the API server.\nThis endpoint can be used to verify that the server is running and \nto get basic information about the API.\n"
-            tags: [Health]
-            responses: {'200': {description: 'Welcome message with API information', content: {application/json: {schema: {type: object, properties: {message: {type: string, example: 'Welcome to Zyvo API'}, version: {type: string, example: 1.0.0}, environment: {type: string, example: development}, csrfToken: {type: string, description: 'CSRF token for this session', example: a4f8b2c1-9d3e-4f5a-8b7c-1e2d3f4a5b6c}}}, examples: {welcome: {summary: 'Welcome response', value: {message: 'Welcome to Zyvo API', version: 1.0.0, environment: development, csrfToken: a4f8b2c1-9d3e-4f5a-8b7c-1e2d3f4a5b6c}}}}}}, '500': {$ref: '#/components/responses/500'}}
-    /api-docs:
-        get:
-            summary: 'API Documentation'
-            description: "Serves the interactive API documentation generated with Redoc.\nThis endpoint provides access to the complete API documentation \nincluding all endpoints, schemas, and examples.\n"
-            tags: [Health]
-            responses: {'200': {description: 'API documentation page', content: {text/html: {schema: {type: string, example: '<!DOCTYPE html><html>...</html>'}}}}, '404': {description: 'Documentation not found (may not be generated yet)', content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}}}
+            parameters:
+                - {in: path, name: id, required: true, schema: {type: string}, description: 'Listing ID'}
+            responses:
+                '204': {description: 'Listing deleted successfully'}
+                '400': {description: 'Invalid listing ID'}
+                '401': {description: 'Unauthorized - admin access required'}
+                '404': {description: 'Listing not found'}
+                '500': {description: 'Internal server error'}

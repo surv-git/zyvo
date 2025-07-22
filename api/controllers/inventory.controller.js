@@ -547,6 +547,89 @@ const getInventoryByProductVariantId = async (req, res) => {
 };
 
 /**
+ * Get inventory record by ID
+ * GET /api/v1/inventory/:id
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const getInventoryById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Find inventory record by ID and populate related data
+    const inventory = await Inventory.findById(id)
+      .populate({
+        path: 'product_variant_id',
+        select: 'sku_code product_id option_values price',
+        populate: {
+          path: 'product_id',
+          select: 'name category_id',
+          populate: {
+            path: 'category_id',
+            select: 'name'
+          }
+        }
+      });
+
+    if (!inventory) {
+      return res.status(404).json({
+        success: false,
+        message: 'Inventory record not found',
+        error: 'No inventory record found with the provided ID'
+      });
+    }
+
+    // Calculate pack details for the variant
+    const packDetails = await getVariantPackDetails(inventory.product_variant_id._id.toString());
+    
+    // For a base unit, computed stock is the same as physical stock
+    // For pack variants, it would be calculated based on base unit stock
+    const computedStock = packDetails.is_base_unit 
+      ? inventory.stock_quantity 
+      : 0; // This would be calculated differently for pack variants
+
+    // Enhanced response with all related information
+    const response = {
+      ...inventory.toObject(),
+      pack_details: packDetails,
+      computed_stock_quantity: computedStock,
+    };
+
+    // Log admin access for audit trail
+    adminAuditLogger.info('inventory_accessed', {
+      admin_id: req.user.id,
+      inventory_id: id,
+      product_variant_id: inventory.product_variant_id._id.toString(),
+      sku_code: inventory.product_variant_id.sku_code
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Inventory record retrieved successfully',
+      data: response
+    });
+
+  } catch (error) {
+    console.error('Error retrieving inventory by ID:', error);
+
+    // Handle invalid ObjectId
+    if (error.name === 'CastError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid inventory ID',
+        error: 'The provided ID is not a valid MongoDB ObjectId'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: 'Failed to retrieve inventory record'
+    });
+  }
+};
+
+/**
  * Update inventory record
  * PATCH /api/v1/inventory/:id
  * @param {Object} req - Express request object
@@ -712,6 +795,7 @@ module.exports = {
   createInventory,
   getAllInventory,
   getInventoryByProductVariantId,
+  getInventoryById,
   updateInventory,
   deleteInventory,
   // Export helper functions for use in other controllers

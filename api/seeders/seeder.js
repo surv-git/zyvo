@@ -17,22 +17,33 @@ const fs = require('fs');
 // Import models
 const User = require('../models/User');
 const Category = require('../models/Category');
+const Brand = require('../models/Brand');
 const Product = require('../models/Product');
 const Option = require('../models/Option');
 const ProductVariant = require('../models/ProductVariant');
+const ProductReview = require('../models/ProductReview');
 const Order = require('../models/Order');
 const Supplier = require('../models/Supplier');
 const SupplierContactNumber = require('../models/SupplierContactNumber');
+const Purchase = require('../models/Purchase');
+const Inventory = require('../models/Inventory');
+const Platform = require('../models/Platform');
+const Listing = require('../models/Listing');
 
 // Import individual seeders
 const userSeeder = require('./data/userSeeder');
 const categorySeeder = require('./data/categorySeeder');
+const brandSeeder = require('./brandSeeder');
 const productSeeder = require('./data/productSeeder');
 const optionSeeder = require('./data/optionSeeder');
 const productVariantSeeder = require('./data/productVariantSeeder');
+const productReviewSeeder = require('./data/productReviewSeeder');
 const orderSeeder = require('./data/orderSeeder');
 const supplierSeeder = require('./data/supplierSeeder');
 const supplierContactNumberSeeder = require('./data/supplierContactNumberSeeder');
+const purchaseSeeder = require('./data/purchaseSeeder');
+const inventorySeeder = require('./data/inventorySeeder');
+const listingSeeder = require('./data/listingSeeder');
 
 /**
  * Seeder configuration
@@ -50,6 +61,12 @@ const SEEDERS = {
     seeder: categorySeeder,
     dependencies: [], // Categories have no dependencies
     description: 'Product categories with hierarchical structure'
+  },
+  brands: {
+    model: Brand,
+    seeder: brandSeeder,
+    dependencies: [], // Brands have no dependencies
+    description: 'Product brands and manufacturers'
   },
   options: {
     model: Option,
@@ -80,6 +97,30 @@ const SEEDERS = {
     seeder: productVariantSeeder,
     dependencies: ['products', 'options'], // Variants need products and options
     description: 'Product variants (SKUs with specific option combinations)'
+  },
+  productReviews: {
+    model: ProductReview,
+    seeder: productReviewSeeder,
+    dependencies: ['users', 'productVariants'], // Reviews need users and product variants
+    description: 'Product reviews and ratings from customers'
+  },
+  purchases: {
+    model: Purchase,
+    seeder: purchaseSeeder,
+    dependencies: ['productVariants', 'suppliers'], // Purchases need product variants and suppliers
+    description: 'Purchase orders and inventory procurement records'
+  },
+  inventory: {
+    model: Inventory,
+    seeder: inventorySeeder,
+    dependencies: ['productVariants'], // Inventory needs product variants
+    description: 'Inventory stock levels and warehouse management data'
+  },
+  listings: {
+    model: Listing,
+    seeder: listingSeeder,
+    dependencies: ['productVariants'], // Listings need product variants and platforms
+    description: 'Product variant listings on different platforms'
   },
   orders: {
     model: Order,
@@ -196,7 +237,7 @@ const getSeederOrder = (seederNames) => {
  * Seed a specific table
  */
 const seedTable = async (tableName, options = {}) => {
-  const { force = false, verbose = true } = options;
+  const { force = false, verbose = true, append = false } = options;
   
   const seeder = getSeeder(tableName);
   if (!seeder) return false;
@@ -206,8 +247,8 @@ const seedTable = async (tableName, options = {}) => {
   try {
     // Check if table already has data
     const existingCount = await model.countDocuments();
-    if (existingCount > 0 && !force) {
-      console.log(`⚠️  Table '${tableName}' already has ${existingCount} records. Use --force to overwrite.`);
+    if (existingCount > 0 && !force && !append) {
+      console.log(`⚠️  Table '${tableName}' already has ${existingCount} records. Use --force to overwrite or --append to add more.`);
       return false;
     }
     
@@ -219,11 +260,15 @@ const seedTable = async (tableName, options = {}) => {
     }
     
     if (verbose) {
-      console.log(`🌱 Seeding ${tableName} (${description})...`);
+      if (append && existingCount > 0) {
+        console.log(`🌱 Appending to ${tableName} (${description})... ${existingCount} existing records`);
+      } else {
+        console.log(`🌱 Seeding ${tableName} (${description})...`);
+      }
     }
     
-    // Clear existing data if force is true
-    if (force && existingCount > 0) {
+    // Clear existing data if force is true (but not when appending)
+    if (force && existingCount > 0 && !append) {
       await model.deleteMany({});
       if (verbose) {
         console.log(`🗑️  Cleared ${existingCount} existing records`);
@@ -421,10 +466,12 @@ Commands:
 
 Options:
   --force          Force operation (overwrite existing data)
+  --append         Add to existing data without clearing
   --quiet          Suppress verbose output
 
 Examples:
   node seeders/seeder.js seed users
+  node seeders/seeder.js seed users --append
   node seeders/seeder.js clean products --force
   node seeders/seeder.js seed all
   node seeders/seeder.js status
@@ -435,6 +482,7 @@ Examples:
   const command = args[0];
   const table = args[1];
   const force = args.includes('--force');
+  const append = args.includes('--append');
   const quiet = args.includes('--quiet');
   const verbose = !quiet;
   
@@ -448,7 +496,7 @@ Examples:
         if (table === 'all') {
           success = await seedAll({ force, verbose });
         } else if (table) {
-          success = await seedTable(table, { force, verbose });
+          success = await seedTable(table, { force, append, verbose });
         } else {
           console.error('❌ Table name required for seed command');
           process.exit(1);

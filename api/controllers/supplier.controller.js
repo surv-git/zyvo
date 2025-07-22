@@ -6,6 +6,7 @@
 
 const mongoose = require('mongoose');
 const Supplier = require('../models/Supplier');
+const SupplierContactNumber = require('../models/SupplierContactNumber');
 const userActivityLogger = require('../loggers/userActivity.logger');
 const adminAuditLogger = require('../loggers/adminAudit.logger');
 const { validationResult } = require('express-validator');
@@ -186,6 +187,30 @@ const getAllSuppliers = async (req, res, next) => {
       .skip(skip)
       .limit(limitNum);
 
+    // Fetch contact numbers for each supplier
+    const supplierIds = suppliers.map(supplier => supplier._id);
+    const contactNumbers = await SupplierContactNumber.find({
+      supplier_id: { $in: supplierIds },
+      is_active: true
+    }).select('supplier_id contact_number contact_name type is_primary extension notes');
+
+    // Group contact numbers by supplier_id
+    const contactNumbersBySupplier = contactNumbers.reduce((acc, contact) => {
+      const supplierId = contact.supplier_id.toString();
+      if (!acc[supplierId]) {
+        acc[supplierId] = [];
+      }
+      acc[supplierId].push(contact);
+      return acc;
+    }, {});
+
+    // Add contact numbers to each supplier
+    const suppliersWithContacts = suppliers.map(supplier => {
+      const supplierObj = supplier.toObject();
+      supplierObj.contact_numbers = contactNumbersBySupplier[supplier._id.toString()] || [];
+      return supplierObj;
+    });
+
     // Get total count for pagination
     const totalItems = await Supplier.countDocuments(query);
     const totalPages = Math.ceil(totalItems / limitNum);
@@ -209,7 +234,7 @@ const getAllSuppliers = async (req, res, next) => {
 
     res.json({
       success: true,
-      data: suppliers,
+      data: suppliersWithContacts,
       pagination: {
         currentPage: pageNum,
         totalPages,
@@ -259,6 +284,16 @@ const getSupplierByIdOrSlug = async (req, res, next) => {
       });
     }
 
+    // Fetch contact numbers for this supplier
+    const contactNumbers = await SupplierContactNumber.find({
+      supplier_id: supplier._id,
+      is_active: true
+    }).select('contact_number contact_name type is_primary extension notes');
+
+    // Add contact numbers to supplier object
+    const supplierWithContacts = supplier.toObject();
+    supplierWithContacts.contact_numbers = contactNumbers;
+
     // Log user activity
     userActivityLogger.info('Supplier viewed', {
       user_id: req.user?.id || 'anonymous',
@@ -270,7 +305,7 @@ const getSupplierByIdOrSlug = async (req, res, next) => {
 
     res.json({
       success: true,
-      data: supplier
+      data: supplierWithContacts
     });
 
   } catch (error) {

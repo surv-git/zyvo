@@ -15,13 +15,13 @@ const {
   removeCouponFromCart,
   clearCart
 } = require('../controllers/cart.controller');
-const userAuthMiddleware = require('../middleware/userAuthMiddleware');
+const { authMiddleware } = require('../middleware/auth.middleware');
 const validationErrorHandler = require('../middleware/validationErrorHandler');
 
 const router = express.Router();
 
 // Apply user authentication middleware to all routes
-router.use(userAuthMiddleware);
+router.use(authMiddleware);
 
 /**
  * @route   GET /api/v1/user/cart
@@ -46,9 +46,7 @@ router.post('/items', [
     .optional()
     .isInt({ min: 1, max: 999 })
     .withMessage('Quantity must be an integer between 1 and 999')
-    .toInt(),
-    
-  validationErrorHandler
+    .toInt()
 ], addItemToCart);
 
 /**

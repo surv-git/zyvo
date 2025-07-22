@@ -6,6 +6,7 @@
 
 const express = require('express');
 const { body, query, param } = require('express-validator');
+const { authMiddleware } = require('../middleware/auth.middleware');
 const { adminAuthMiddleware } = require('../middleware/admin.middleware');
 const {
   createListing,
@@ -17,7 +18,8 @@ const {
 
 const router = express.Router();
 
-// Apply admin authentication to all routes
+// Apply authentication middleware first, then admin check
+router.use(authMiddleware);
 router.use(adminAuthMiddleware);
 
 /**

@@ -27,14 +27,17 @@ module.exports = {
   // Test file patterns
   testMatch: [
     '**/__tests__/**/*.test.js',
-    '**/?(*.)+(spec|test).js'
+    '**/?(*.)+(spec|test).js',
+    '**/tests/**/*.test.js'
   ],
   
   // Ignore patterns
   testPathIgnorePatterns: [
     '/node_modules/',
     '/build/',
-    '/dist/'
+    '/dist/',
+    '/tests/integration/api-disabled/',
+    '/tests/temp/'
   ],
   
   // Setup files
@@ -52,6 +55,7 @@ module.exports = {
     'controllers/cart.controller.js',
     'controllers/category.controller.js',
     'controllers/couponCampaign.controller.js',
+    'controllers/favorite.controller.js',
     'controllers/inventory.controller.js',
     'controllers/listing.controller.js',
     'controllers/option.controller.js',
@@ -66,6 +70,7 @@ module.exports = {
     'controllers/supplierContactNumber.controller.js',
     'controllers/user.controller.js',
     'controllers/userCoupon.controller.js',
+    'controllers/wallet.controller.js',
     // 'controllers/purchase.controller.js', // Basic tests in place
     // Add other files as they get tested
     // 'middleware/**/*.js',

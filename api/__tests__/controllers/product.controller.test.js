@@ -475,16 +475,9 @@ describe('Product Controller', () => {
       score: 4.5,
       is_active: true,
       save: jest.fn().mockImplementation(function() {
-        // Update the product properties
+        // Update the properties directly on this object
         this.name = 'iPhone 15 Pro Updated';
         this.description = 'Updated description';
-        this.price = 999.99;
-        return Promise.resolve(this);
-      }),
-      populate: jest.fn().mockImplementation(function() {
-        // Add populated fields
-        this.category_id = { _id: 'cat123', name: 'Electronics' };
-        this.brand_id = { _id: 'brand123', name: 'Apple' };
         return Promise.resolve(this);
       })
     };
@@ -496,6 +489,31 @@ describe('Product Controller', () => {
     });
 
     it('should update product successfully', async () => {
+      // Setup specific mocks for this test
+      const testProduct = {
+        _id: 'prod123',
+        name: 'iPhone 15 Pro',
+        description: 'Original description',
+        short_description: 'iPhone Pro',
+        category_id: 'cat123',
+        brand_id: 'brand123',
+        score: 4.5,
+        is_active: true,
+        save: jest.fn().mockResolvedValue({
+          _id: 'prod123',
+          name: 'iPhone 15 Pro Updated',
+          description: 'Updated description',
+          short_description: 'iPhone Pro',
+          category_id: 'cat123',
+          brand_id: 'brand123',
+          score: 4.5,
+          is_active: true
+        })
+      };
+      
+      Product.findById = jest.fn().mockResolvedValue(testProduct);
+      adminAuditLogger.info = jest.fn();
+      
       mockReq.params = { id: 'prod123' };
       mockReq.body = updateData;
       mockReq.user = { id: 'admin123', email: 'admin@example.com', role: 'admin' };
@@ -503,7 +521,7 @@ describe('Product Controller', () => {
       await productController.updateProduct(mockReq, mockRes, mockNext);
 
       expect(Product.findById).toHaveBeenCalledWith('prod123');
-      expect(mockProduct.save).toHaveBeenCalled();
+      expect(testProduct.save).toHaveBeenCalled();
       expect(adminAuditLogger.info).toHaveBeenCalledWith('Product updated', expect.any(Object));
       expect(mockRes.json).toHaveBeenCalledWith({
         success: true,

@@ -183,6 +183,33 @@ const productVariantSchema = new Schema({
     index: true
   },
   
+  // Rating and review fields (denormalized from ProductReview)
+  average_rating: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 5,
+    index: true
+  },
+  
+  reviews_count: {
+    type: Number,
+    default: 0,
+    min: 0,
+    index: true
+  },
+  
+  rating_distribution: {
+    type: {
+      '1': { type: Number, default: 0, min: 0 },
+      '2': { type: Number, default: 0, min: 0 },
+      '3': { type: Number, default: 0, min: 0 },
+      '4': { type: Number, default: 0, min: 0 },
+      '5': { type: Number, default: 0, min: 0 }
+    },
+    default: { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 }
+  },
+  
   // Timestamps
   createdAt: {
     type: Date,

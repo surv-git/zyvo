@@ -1,0 +1,493 @@
+/* Custom Theme: Sunset Orange */
+.theme-sunset .theme-container {
+    --primary: #F08A4B;
+    --primary-foreground: #ffffff;
+    --ring: #F08A4B;
+    --sidebar-primary: #F08A4B;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-ring: #F08A4B;
+    --chart-1: #F08A4B;
+    --chart-2: #e07a3b;
+    --chart-3: #d06a2b;
+    --chart-4: #c05a1b;
+    --chart-5: #b04a0b;
+  
+    @variant dark {
+      --primary: #F08A4B;
+      --primary-foreground: #ffffff;
+      --ring: #F08A4B;
+      --sidebar-primary: #F08A4B;
+      --sidebar-primary-foreground: #ffffff;
+      --sidebar-ring: #F08A4B;
+    }
+  }
+  
+  /* Custom Theme: Dark Slate */
+  .theme-darkslate .theme-container {
+    --primary: #191923;
+    --primary-foreground: #ffffff;
+    --ring: #191923;
+    --sidebar-primary: #191923;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-ring: #191923;
+    --chart-1: #191923;
+    --chart-2: #2a2a34;
+    --chart-3: #3b3b45;
+    --chart-4: #4c4c56;
+    --chart-5: #5d5d67;
+  
+    @variant dark {
+      --primary: #2a2a34;
+      --primary-foreground: #ffffff;
+      --ring: #2a2a34;
+      --sidebar-primary: #2a2a34;
+      --sidebar-primary-foreground: #ffffff;
+      --sidebar-ring: #2a2a34;
+    }
+  }
+  
+  /* Custom Theme: Crimson Red */
+  .theme-crimson .theme-container {
+    --primary: #A30000;
+    --primary-foreground: #ffffff;
+    --ring: #A30000;
+    --sidebar-primary: #A30000;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-ring: #A30000;
+    --chart-1: #A30000;
+    --chart-2: #b31010;
+    --chart-3: #c32020;
+    --chart-4: #d33030;
+    --chart-5: #e34040;
+  
+    @variant dark {
+      --primary: #b31010;
+      --primary-foreground: #ffffff;
+      --ring: #b31010;
+      --sidebar-primary: #b31010;
+      --sidebar-primary-foreground: #ffffff;
+      --sidebar-ring: #b31010;
+    }
+  }
+  
+  /* Custom Theme: Midnight Navy */
+  .theme-midnight .theme-container {
+    --primary: #17183B;
+    --primary-foreground: #ffffff;
+    --ring: #17183B;
+    --sidebar-primary: #17183B;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-ring: #17183B;
+    --chart-1: #17183B;
+    --chart-2: #27284b;
+    --chart-3: #37385b;
+    --chart-4: #47486b;
+    --chart-5: #57587b;
+  
+    @variant dark {
+      --primary: #27284b;
+      --primary-foreground: #ffffff;
+      --ring: #27284b;
+      --sidebar-primary: #27284b;
+      --sidebar-primary-foreground: #ffffff;
+      --sidebar-ring: #27284b;
+    }
+  }
+  
+  /* Custom Theme: Royal Blue */
+  .theme-royal .theme-container {
+    --primary: #0E0E52;
+    --primary-foreground: #ffffff;
+    --ring: #0E0E52;
+    --sidebar-primary: #0E0E52;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-ring: #0E0E52;
+    --chart-1: #0E0E52;
+    --chart-2: #1e1e62;
+    --chart-3: #2e2e72;
+    --chart-4: #3e3e82;
+    --chart-5: #4e4e92;
+  
+    @variant dark {
+      --primary: #1e1e62;
+      --primary-foreground: #ffffff;
+      --ring: #1e1e62;
+      --sidebar-primary: #1e1e62;
+      --sidebar-primary-foreground: #ffffff;
+      --sidebar-ring: #1e1e62;
+    }
+  }
+  
+  /* Custom Theme: Deep Purple */
+  .theme-deep .theme-container {
+    --primary: #260F26;
+    --primary-foreground: #ffffff;
+    --ring: #260F26;
+    --sidebar-primary: #260F26;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-ring: #260F26;
+    --chart-1: #260F26;
+    --chart-2: #361f36;
+    --chart-3: #462f46;
+    --chart-4: #563f56;
+    --chart-5: #664f66;
+  
+    @variant dark {
+      --primary: #361f36;
+      --primary-foreground: #ffffff;
+      --ring: #361f36;
+      --sidebar-primary: #361f36;
+      --sidebar-primary-foreground: #ffffff;
+      --sidebar-ring: #361f36;
+    }
+  }
+  
+  .theme-default .theme-container {
+    --primary: var(--color-slate-600);
+    --primary-foreground: var(--color-slate-50);
+    --ring: var(--color-slate-400);
+    --sidebar-primary: var(--color-slate-600);
+    --sidebar-primary-foreground: var(--color-slate-50);
+    --sidebar-ring: var(--color-slate-400);
+    --chart-1: var(--color-slate-300);
+    --chart-2: var(--color-slate-500);
+    --chart-3: var(--color-slate-600);
+    --chart-4: var(--color-slate-700);
+    --chart-5: var(--color-slate-800);
+  
+    @variant dark {
+      --primary: var(--color-slate-500);
+      --primary-foreground: var(--color-slate-50);
+      --ring: var(--color-slate-400);
+      --sidebar-primary: var(--color-slate-500);
+      --sidebar-primary-foreground: var(--color-slate-50);
+      --sidebar-ring: var(--color-slate-400);
+    }
+  }
+  
+  .theme-blue .theme-container {
+    --primary: var(--color-blue-600);
+    --primary-foreground: var(--color-blue-50);
+    --ring: var(--color-blue-400);
+    --sidebar-primary: var(--color-blue-600);
+    --sidebar-primary-foreground: var(--color-blue-50);
+    --sidebar-ring: var(--color-blue-400);
+    --chart-1: var(--color-blue-300);
+    --chart-2: var(--color-blue-500);
+    --chart-3: var(--color-blue-600);
+    --chart-4: var(--color-blue-700);
+    --chart-5: var(--color-blue-800);
+  
+    @variant dark {
+      --primary: var(--color-blue-500);
+      --primary-foreground: var(--color-blue-50);
+      --ring: var(--color-blue-900);
+      --sidebar-primary: var(--color-blue-500);
+      --sidebar-primary-foreground: var(--color-blue-50);
+      --sidebar-ring: var(--color-blue-900);
+    }
+  }
+  
+  .theme-green .theme-container {
+    --primary: var(--color-lime-600);
+    --primary-foreground: var(--color-lime-50);
+    --ring: var(--color-lime-400);
+    --chart-1: var(--color-green-300);
+    --chart-2: var(--color-green-500);
+    --chart-3: var(--color-green-600);
+    --chart-4: var(--color-green-700);
+    --chart-5: var(--color-green-800);
+    --sidebar-primary: var(--color-lime-600);
+    --sidebar-primary-foreground: var(--color-lime-50);
+    --sidebar-ring: var(--color-lime-400);
+  
+    @variant dark {
+      --primary: var(--color-lime-600);
+      --primary-foreground: var(--color-lime-50);
+      --ring: var(--color-lime-900);
+      --sidebar-primary: var(--color-lime-500);
+      --sidebar-primary-foreground: var(--color-lime-50);
+      --sidebar-ring: var(--color-lime-900);
+    }
+  }
+  
+  .theme-amber .theme-container {
+    --primary: var(--color-amber-600);
+    --primary-foreground: var(--color-amber-50);
+    --ring: var(--color-amber-400);
+    --chart-1: var(--color-amber-300);
+    --chart-2: var(--color-amber-500);
+    --chart-3: var(--color-amber-600);
+    --chart-4: var(--color-amber-700);
+    --chart-5: var(--color-amber-800);
+    --sidebar-primary: var(--color-amber-600);
+    --sidebar-primary-foreground: var(--color-amber-50);
+    --sidebar-ring: var(--color-amber-400);
+  
+    @variant dark {
+      --primary: var(--color-amber-500);
+      --primary-foreground: var(--color-amber-50);
+      --ring: var(--color-amber-900);
+      --sidebar-primary: var(--color-amber-500);
+      --sidebar-primary-foreground: var(--color-amber-50);
+      --sidebar-ring: var(--color-amber-900);
+    }
+  }
+  
+  .theme-rose .theme-container {
+    --primary: var(--color-rose-600);
+    --primary-foreground: var(--color-rose-50);
+    --ring: var(--color-rose-400);
+    --chart-1: var(--color-rose-300);
+    --chart-2: var(--color-rose-500);
+    --chart-3: var(--color-rose-600);
+    --chart-4: var(--color-rose-700);
+    --chart-5: var(--color-rose-800);
+    --sidebar-primary: var(--color-rose-600);
+    --sidebar-primary-foreground: var(--color-rose-50);
+    --sidebar-ring: var(--color-rose-400);
+  
+    @variant dark {
+      --primary: var(--color-rose-500);
+      --primary-foreground: var(--color-rose-50);
+      --ring: var(--color-rose-900);
+      --sidebar-primary: var(--color-rose-500);
+      --sidebar-primary-foreground: var(--color-rose-50);
+      --sidebar-ring: var(--color-rose-900);
+    }
+  }
+  
+  .theme-purple .theme-container {
+    --primary: var(--color-purple-600);
+    --primary-foreground: var(--color-purple-50);
+    --ring: var(--color-purple-400);
+    --chart-1: var(--color-purple-300);
+    --chart-2: var(--color-purple-500);
+    --chart-3: var(--color-purple-600);
+    --chart-4: var(--color-purple-700);
+    --chart-5: var(--color-purple-800);
+    --sidebar-primary: var(--color-purple-600);
+    --sidebar-primary-foreground: var(--color-purple-50);
+    --sidebar-ring: var(--color-purple-400);
+  
+    @variant dark {
+      --primary: var(--color-purple-500);
+      --primary-foreground: var(--color-purple-50);
+      --ring: var(--color-purple-900);
+      --sidebar-primary: var(--color-purple-500);
+      --sidebar-primary-foreground: var(--color-purple-50);
+      --sidebar-ring: var(--color-purple-900);
+    }
+  }
+  
+  .theme-orange .theme-container {
+    --primary: var(--color-orange-600);
+    --primary-foreground: var(--color-orange-50);
+    --ring: var(--color-orange-400);
+    --chart-1: var(--color-orange-300);
+    --chart-2: var(--color-orange-500);
+    --chart-3: var(--color-orange-600);
+    --chart-4: var(--color-orange-700);
+    --chart-5: var(--color-orange-800);
+    --sidebar-primary: var(--color-orange-600);
+    --sidebar-primary-foreground: var(--color-orange-50);
+    --sidebar-ring: var(--color-orange-400);
+  
+    @variant dark {
+      --primary: var(--color-orange-500);
+      --primary-foreground: var(--color-orange-50);
+      --ring: var(--color-orange-900);
+      --sidebar-primary: var(--color-orange-500);
+      --sidebar-primary-foreground: var(--color-orange-50);
+      --sidebar-ring: var(--color-orange-900);
+    }
+  }
+  
+  .theme-teal .theme-container {
+    --primary: var(--color-teal-600);
+    --primary-foreground: var(--color-teal-50);
+    --chart-1: var(--color-teal-300);
+    --chart-2: var(--color-teal-500);
+    --chart-3: var(--color-teal-600);
+    --chart-4: var(--color-teal-700);
+    --chart-5: var(--color-teal-800);
+    --sidebar-primary: var(--color-teal-600);
+    --sidebar-primary-foreground: var(--color-teal-50);
+    --sidebar-ring: var(--color-teal-400);
+  
+    @variant dark {
+      --primary: var(--color-teal-500);
+      --primary-foreground: var(--color-teal-50);
+      --sidebar-primary: var(--color-teal-500);
+      --sidebar-primary-foreground: var(--color-teal-50);
+      --sidebar-ring: var(--color-teal-900);
+    }
+  }
+  
+  .theme-mono .theme-container {
+    --font-sans: var(--font-mono);
+    --primary: var(--color-stone-600);
+    --primary-foreground: var(--color-stone-50);
+    --chart-1: var(--color-stone-300);
+    --chart-2: var(--color-stone-500);
+    --chart-3: var(--color-stone-600);
+    --chart-4: var(--color-stone-700);
+    --chart-5: var(--color-stone-800);
+    --sidebar-primary: var(--color-stone-600);
+    --sidebar-primary-foreground: var(--color-stone-50);
+    --sidebar-ring: var(--color-stone-400);
+  
+    @variant dark {
+      --primary: var(--color-stone-500);
+      --primary-foreground: var(--color-stone-50);
+      --sidebar-primary: var(--color-stone-500);
+      --sidebar-primary-foreground: var(--color-stone-50);
+      --sidebar-ring: var(--color-stone-900);
+    }
+  
+    @media (min-width: 1024px) {
+      --font-sans: var(--font-mono);
+      --radius: 0.45em;
+      --text-lg: 1rem;
+      --text-xl: 1.1rem;
+      --text-2xl: 1.2rem;
+      --text-3xl: 1.3rem;
+      --text-4xl: 1.4rem;
+      --text-5xl: 1.5rem;
+      --text-6xl: 1.6rem;
+      --text-7xl: 1.7rem;
+      --text-8xl: 1.8rem;
+      --text-base: 0.85rem;
+      --text-sm: 0.8rem;
+      --spacing: 0.222222rem;
+    }
+  
+    .rounded-xs,
+    .rounded-sm,
+    .rounded-md,
+    .rounded-lg,
+    .rounded-xl {
+      border-radius: 0;
+    }
+  
+    .shadow-xs,
+    .shadow-sm,
+    .shadow-md,
+    .shadow-lg,
+    .shadow-xl {
+      box-shadow: none;
+    }
+  
+    [data-slot="toggle-group"],
+    [data-slot="toggle-group-item"] {
+      @apply !rounded-none !shadow-none;
+    }
+  }
+  
+  .theme-scaled .theme-container {
+    --chart-1: var(--color-blue-300);
+    --chart-2: var(--color-blue-500);
+    --chart-3: var(--color-blue-600);
+    --chart-4: var(--color-blue-700);
+    --chart-5: var(--color-blue-800);
+  
+    @media (min-width: 1024px) {
+      --radius: 0.45em;
+      --text-lg: 1rem;
+      --text-xl: 1.1rem;
+      --text-2xl: 1.2rem;
+      --text-3xl: 1.3rem;
+      --text-4xl: 1.4rem;
+      --text-5xl: 1.5rem;
+      --text-6xl: 1.6rem;
+      --text-7xl: 1.7rem;
+      --text-8xl: 1.8rem;
+      --text-base: 0.85rem;
+      --text-sm: 0.8rem;
+      --spacing: 0.2rem;
+    }
+  
+    [data-slot="select-trigger"],
+    [data-slot="toggle-group-item"] {
+      --spacing: 0.2rem;
+    }
+  
+    [data-slot="card"] {
+      border-radius: var(--radius);
+      padding-block: calc(var(--spacing) * 4);
+      gap: calc(var(--spacing) * 2);
+    }
+  
+    [data-slot="card"].pb-0 {
+      padding-bottom: 0;
+    }
+  }
+  
+  .theme-red .theme-container {
+    --primary: var(--color-red-600);
+    --primary-foreground: var(--color-red-50);
+    --ring: var(--color-red-400);
+    --chart-1: var(--color-red-300);
+    --chart-2: var(--color-red-500);
+    --chart-3: var(--color-red-600);
+    --chart-4: var(--color-red-700);
+    --chart-5: var(--color-red-800);
+    --sidebar-primary: var(--color-red-600);
+    --sidebar-primary-foreground: var(--color-red-50);
+    --sidebar-ring: var(--color-red-400);
+  
+    @variant dark {
+      --primary: var(--color-red-500);
+      --primary-foreground: var(--color-red-50);
+      --ring: var(--color-red-900);
+      --sidebar-primary: var(--color-red-500);
+      --sidebar-primary-foreground: var(--color-red-50);
+      --sidebar-ring: var(--color-red-900);
+    }
+  }
+  
+  .theme-yellow .theme-container {
+    --primary: var(--color-yellow-400);
+    --primary-foreground: var(--color-yellow-900);
+    --ring: var(--color-yellow-400);
+    --chart-1: var(--color-yellow-300);
+    --chart-2: var(--color-yellow-500);
+    --chart-3: var(--color-yellow-600);
+    --chart-4: var(--color-yellow-700);
+    --chart-5: var(--color-yellow-800);
+    --sidebar-primary: var(--color-yellow-600);
+    --sidebar-primary-foreground: var(--color-yellow-50);
+    --sidebar-ring: var(--color-yellow-400);
+  
+    @variant dark {
+      --primary: var(--color-yellow-500);
+      --primary-foreground: var(--color-yellow-900);
+      --ring: var(--color-yellow-900);
+      --sidebar-primary: var(--color-yellow-500);
+      --sidebar-primary-foreground: var(--color-yellow-50);
+      --sidebar-ring: var(--color-yellow-900);
+    }
+  }
+  
+  .theme-violet .theme-container {
+    --primary: var(--color-violet-600);
+    --primary-foreground: var(--color-violet-50);
+    --ring: var(--color-violet-400);
+    --chart-1: var(--color-violet-300);
+    --chart-2: var(--color-violet-500);
+    --chart-3: var(--color-violet-600);
+    --chart-4: var(--color-violet-700);
+    --chart-5: var(--color-violet-800);
+    --sidebar-primary: var(--color-violet-600);
+    --sidebar-primary-foreground: var(--color-violet-50);
+    --sidebar-ring: var(--color-violet-400);
+  
+    @variant dark {
+      --primary: var(--color-violet-500);
+      --primary-foreground: var(--color-violet-50);
+      --ring: var(--color-violet-900);
+      --sidebar-primary: var(--color-violet-500);
+      --sidebar-primary-foreground: var(--color-violet-50);
+      --sidebar-ring: var(--color-violet-900);
+    }
+  }

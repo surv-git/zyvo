@@ -1,0 +1,134 @@
+/**
+ * Favorite Validation Middleware
+ * Express-validator rules for favorite operations
+ */
+
+const { body, param, query } = require('express-validator');
+const mongoose = require('mongoose');
+
+/**
+ * Validation for adding a favorite
+ */
+const validateAddFavorite = [
+  body('product_variant_id')
+    .notEmpty()
+    .withMessage('Product variant ID is required')
+    .custom((value) => {
+      if (!mongoose.Types.ObjectId.isValid(value)) {
+        throw new Error('Invalid product variant ID format');
+      }
+      return true;
+    }),
+
+  body('user_notes')
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage('User notes must not exceed 500 characters')
+    .trim()
+];
+
+/**
+ * Validation for updating favorite notes
+ */
+const validateUpdateFavoriteNotes = [
+  param('productVariantId')
+    .custom((value) => {
+      if (!mongoose.Types.ObjectId.isValid(value)) {
+        throw new Error('Invalid product variant ID format');
+      }
+      return true;
+    }),
+
+  body('user_notes')
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage('User notes must not exceed 500 characters')
+    .trim()
+];
+
+/**
+ * Validation for product variant ID parameter
+ */
+const validateProductVariantId = [
+  param('productVariantId')
+    .custom((value) => {
+      if (!mongoose.Types.ObjectId.isValid(value)) {
+        throw new Error('Invalid product variant ID format');
+      }
+      return true;
+    })
+];
+
+/**
+ * Validation for favorites query parameters
+ */
+const validateFavoritesQuery = [
+  query('page')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Page must be a positive integer'),
+
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: 100 })
+    .withMessage('Limit must be between 1 and 100'),
+
+  query('sort_by')
+    .optional()
+    .isIn(['added_at', 'createdAt', 'updatedAt'])
+    .withMessage('Invalid sort field'),
+
+  query('sort_order')
+    .optional()
+    .isIn(['asc', 'desc'])
+    .withMessage('Sort order must be asc or desc'),
+
+  query('include_inactive')
+    .optional()
+    .isIn(['true', 'false'])
+    .withMessage('include_inactive must be true or false')
+];
+
+/**
+ * Validation for bulk add favorites
+ */
+const validateBulkAddFavorites = [
+  body('product_variant_ids')
+    .notEmpty()
+    .withMessage('Product variant IDs are required')
+    .isArray({ min: 1, max: 50 })
+    .withMessage('Product variant IDs must be an array with 1-50 items')
+    .custom((ids) => {
+      for (const id of ids) {
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+          throw new Error('All product variant IDs must be valid ObjectId format');
+        }
+      }
+      return true;
+    }),
+
+  body('user_notes')
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage('User notes must not exceed 500 characters')
+    .trim()
+];
+
+/**
+ * Validation for popular favorites query
+ */
+const validatePopularQuery = [
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: 50 })
+    .withMessage('Limit must be between 1 and 50')
+];
+
+module.exports = {
+  validateAddFavorite,
+  validateUpdateFavoriteNotes,
+  validateProductVariantId,
+  validateFavoritesQuery,
+  validateBulkAddFavorites,
+  validatePopularQuery
+};

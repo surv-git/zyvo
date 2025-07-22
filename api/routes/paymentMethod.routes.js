@@ -13,8 +13,8 @@ const {
   getDefaultPaymentMethod
 } = require('../controllers/paymentMethod.controller');
 
-// Import middleware (assuming these exist)
-const userAuthMiddleware = require('../middleware/userAuth.middleware');
+// Import middleware
+const { authMiddleware } = require('../middleware/auth.middleware');
 
 /**
  * Payment Method Routes
@@ -23,7 +23,7 @@ const userAuthMiddleware = require('../middleware/userAuth.middleware');
  */
 
 // Apply user authentication to all routes
-router.use(userAuthMiddleware);
+router.use(authMiddleware);
 
 // Validation middleware for payment method creation
 const validateAddPaymentMethod = [

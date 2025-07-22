@@ -12,8 +12,30 @@ const { sendVerificationSMS, generateOTP } = require('../../utils/sendVerificati
 // Mock the User model
 jest.mock('../../models/User');
 
+// Mock verification utilities
+jest.mock('../../utils/sendVerificationEmail');
+jest.mock('../../utils/sendVerificationSMS');
+
 describe('User Controller', () => {
   let mockReq, mockRes, mockNext;
+  let originalSetTimeout;
+
+  beforeAll(() => {
+    // Mock setTimeout to prevent async operations after test completion
+    originalSetTimeout = global.setTimeout;
+    global.setTimeout = jest.fn((callback, delay) => {
+      // Execute immediately in tests to avoid async issues
+      if (typeof callback === 'function') {
+        callback();
+      }
+      return 1; // Return a mock timer ID
+    });
+  });
+
+  afterAll(() => {
+    // Restore original setTimeout
+    global.setTimeout = originalSetTimeout;
+  });
 
   beforeEach(() => {
     // Reset all mocks before each test

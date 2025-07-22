@@ -8,6 +8,7 @@ const express = require('express');
 const router = express.Router();
 
 // Import middleware
+const { authMiddleware } = require('../middleware/auth.middleware');
 const { adminAuthMiddleware } = require('../middleware/admin.middleware');
 
 // Import controller functions
@@ -19,7 +20,8 @@ const {
   deletePurchase
 } = require('../controllers/purchase.controller');
 
-// Apply admin authentication middleware to all routes
+// Apply authentication middleware to all routes
+router.use(authMiddleware);
 router.use(adminAuthMiddleware);
 
 /**

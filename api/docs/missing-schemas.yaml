@@ -1,0 +1,498 @@
+# Missing Schemas for OpenAPI Documentation
+# These schemas should be added to the main openapi.yaml file
+
+components:
+  schemas:
+    # Cart Schema
+    Cart:
+      type: object
+      required: [user_id]
+      properties:
+        _id:
+          type: string
+          description: 'Unique identifier for the cart'
+          example: '64a1b2c3d4e5f6789abcdef0'
+        user_id:
+          type: string
+          description: 'Reference to the user who owns this cart'
+          example: '64a1b2c3d4e5f6789abcdef1'
+        applied_coupon_code:
+          type: string
+          description: 'Applied coupon code (if any)'
+          example: 'SAVE20'
+        coupon_discount_amount:
+          type: number
+          minimum: 0
+          description: 'Discount amount from applied coupon'
+          example: 15.99
+        cart_total_amount:
+          type: number
+          minimum: 0
+          description: 'Total amount of all items in cart'
+          example: 299.99
+        createdAt:
+          type: string
+          format: date-time
+          example: '2025-07-16T07:30:00.000Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2025-07-16T07:30:00.000Z'
+
+    # CartItem Schema
+    CartItem:
+      type: object
+      required: [cart_id, product_variant_id, quantity, price_at_addition]
+      properties:
+        _id:
+          type: string
+          description: 'Unique identifier for the cart item'
+        cart_id:
+          type: string
+          description: 'Reference to the cart'
+        product_variant_id:
+          type: string
+          description: 'Reference to the product variant'
+        quantity:
+          type: integer
+          minimum: 1
+          description: 'Quantity of this item in cart'
+          example: 2
+        price_at_addition:
+          type: number
+          minimum: 0
+          description: 'Price when item was added to cart'
+          example: 99.99
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # Order Schema
+    Order:
+      type: object
+      required: [user_id, order_number, order_status, payment_status]
+      properties:
+        _id:
+          type: string
+          description: 'Unique identifier for the order'
+        user_id:
+          type: string
+          description: 'Reference to the user who placed the order'
+        order_number:
+          type: string
+          description: 'Unique order number'
+          example: 'ORD-20250716-ABC123'
+        order_status:
+          type: string
+          enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned']
+          description: 'Current status of the order'
+          example: 'pending'
+        payment_status:
+          type: string
+          enum: ['pending', 'paid', 'failed', 'refunded', 'partially_refunded']
+          description: 'Payment status of the order'
+          example: 'pending'
+        shipping_address:
+          $ref: '#/components/schemas/Address'
+        billing_address:
+          $ref: '#/components/schemas/Address'
+        subtotal_amount:
+          type: number
+          minimum: 0
+          description: 'Subtotal before taxes and shipping'
+          example: 299.99
+        tax_amount:
+          type: number
+          minimum: 0
+          description: 'Tax amount'
+          example: 24.00
+        shipping_amount:
+          type: number
+          minimum: 0
+          description: 'Shipping cost'
+          example: 9.99
+        discount_amount:
+          type: number
+          minimum: 0
+          description: 'Total discount applied'
+          example: 30.00
+        total_amount:
+          type: number
+          minimum: 0
+          description: 'Final total amount'
+          example: 303.98
+        payment_method:
+          type: string
+          description: 'Payment method used'
+          example: 'credit_card'
+        tracking_number:
+          type: string
+          description: 'Shipping tracking number'
+          example: '1Z999AA1234567890'
+        shipping_carrier:
+          type: string
+          description: 'Shipping carrier name'
+          example: 'UPS'
+        notes:
+          type: string
+          description: 'Order notes'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # OrderItem Schema
+    OrderItem:
+      type: object
+      required: [order_id, product_variant_id, sku_code, product_name, quantity, price, subtotal]
+      properties:
+        _id:
+          type: string
+          description: 'Unique identifier for the order item'
+        order_id:
+          type: string
+          description: 'Reference to the order'
+        product_variant_id:
+          type: string
+          description: 'Reference to the product variant'
+        sku_code:
+          type: string
+          description: 'SKU code of the product variant'
+          example: 'TSH-RED-L'
+        product_name:
+          type: string
+          description: 'Name of the product at time of order'
+          example: 'Premium T-Shirt'
+        quantity:
+          type: integer
+          minimum: 1
+          description: 'Quantity ordered'
+          example: 2
+        price:
+          type: number
+          minimum: 0
+          description: 'Price per unit at time of order'
+          example: 29.99
+        subtotal:
+          type: number
+          minimum: 0
+          description: 'Total price for this item (quantity × price)'
+          example: 59.98
+
+    # Address Schema
+    Address:
+      type: object
+      required: [full_name, address_line1, city, state, postal_code, country]
+      properties:
+        full_name:
+          type: string
+          maxLength: 100
+          description: 'Full name for delivery'
+          example: 'John Doe'
+        address_line1:
+          type: string
+          maxLength: 200
+          description: 'Primary address line'
+          example: '123 Main Street'
+        address_line2:
+          type: string
+          maxLength: 200
+          description: 'Secondary address line (optional)'
+          example: 'Apt 4B'
+        city:
+          type: string
+          maxLength: 100
+          description: 'City name'
+          example: 'New York'
+        state:
+          type: string
+          maxLength: 100
+          description: 'State or province'
+          example: 'NY'
+        postal_code:
+          type: string
+          maxLength: 20
+          description: 'Postal or ZIP code'
+          example: '10001'
+        country:
+          type: string
+          maxLength: 100
+          description: 'Country name'
+          example: 'United States'
+
+    # Favorite Schema
+    Favorite:
+      type: object
+      required: [user_id, product_variant_id]
+      properties:
+        _id:
+          type: string
+          description: 'Unique identifier for the favorite'
+        user_id:
+          type: string
+          description: 'Reference to the user'
+        product_variant_id:
+          type: string
+          description: 'Reference to the product variant'
+        is_active:
+          type: boolean
+          default: true
+          description: 'Whether the favorite is active'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # ProductReview Schema
+    ProductReview:
+      type: object
+      required: [user_id, product_id, rating, review_text]
+      properties:
+        _id:
+          type: string
+          description: 'Unique identifier for the review'
+        user_id:
+          type: string
+          description: 'Reference to the user who wrote the review'
+        product_id:
+          type: string
+          description: 'Reference to the product being reviewed'
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: 'Rating from 1 to 5 stars'
+          example: 4
+        review_text:
+          type: string
+          maxLength: 2000
+          description: 'Review content'
+          example: 'Great product, highly recommended!'
+        is_verified_purchase:
+          type: boolean
+          description: 'Whether this review is from a verified purchase'
+          example: true
+        is_approved:
+          type: boolean
+          default: false
+          description: 'Whether the review has been approved by admin'
+        helpful_count:
+          type: integer
+          minimum: 0
+          description: 'Number of users who found this review helpful'
+          example: 5
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # Wallet Schema
+    Wallet:
+      type: object
+      required: [user_id]
+      properties:
+        _id:
+          type: string
+          description: 'Unique identifier for the wallet'
+        user_id:
+          type: string
+          description: 'Reference to the user who owns this wallet'
+        balance:
+          type: number
+          minimum: 0
+          description: 'Current wallet balance'
+          example: 150.75
+        currency:
+          type: string
+          default: 'USD'
+          description: 'Currency code'
+          example: 'USD'
+        is_active:
+          type: boolean
+          default: true
+          description: 'Whether the wallet is active'
+        last_transaction_date:
+          type: string
+          format: date-time
+          description: 'Date of last transaction'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # WalletTransaction Schema
+    WalletTransaction:
+      type: object
+      required: [wallet_id, transaction_type, amount]
+      properties:
+        _id:
+          type: string
+          description: 'Unique identifier for the transaction'
+        wallet_id:
+          type: string
+          description: 'Reference to the wallet'
+        transaction_type:
+          type: string
+          enum: ['credit', 'debit', 'refund', 'cashback', 'transfer']
+          description: 'Type of transaction'
+          example: 'credit'
+        amount:
+          type: number
+          minimum: 0
+          description: 'Transaction amount'
+          example: 25.00
+        description:
+          type: string
+          maxLength: 500
+          description: 'Transaction description'
+          example: 'Cashback from order #ORD-123'
+        reference_id:
+          type: string
+          description: 'Reference to related entity (order, refund, etc.)'
+        status:
+          type: string
+          enum: ['pending', 'completed', 'failed', 'cancelled']
+          default: 'pending'
+          description: 'Transaction status'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # CouponCampaign Schema
+    CouponCampaign:
+      type: object
+      required: [code, discount_type, discount_value, start_date, end_date]
+      properties:
+        _id:
+          type: string
+          description: 'Unique identifier for the coupon campaign'
+        code:
+          type: string
+          description: 'Coupon code'
+          example: 'SAVE20'
+        name:
+          type: string
+          description: 'Campaign name'
+          example: 'Summer Sale 2025'
+        description:
+          type: string
+          description: 'Campaign description'
+        discount_type:
+          type: string
+          enum: ['percentage', 'fixed_amount']
+          description: 'Type of discount'
+          example: 'percentage'
+        discount_value:
+          type: number
+          minimum: 0
+          description: 'Discount value (percentage or fixed amount)'
+          example: 20
+        minimum_order_amount:
+          type: number
+          minimum: 0
+          description: 'Minimum order amount to apply coupon'
+          example: 100.00
+        maximum_discount_amount:
+          type: number
+          minimum: 0
+          description: 'Maximum discount amount (for percentage coupons)'
+          example: 50.00
+        usage_limit:
+          type: integer
+          minimum: 1
+          description: 'Maximum number of times this coupon can be used'
+          example: 1000
+        usage_count:
+          type: integer
+          minimum: 0
+          description: 'Number of times this coupon has been used'
+          example: 45
+        start_date:
+          type: string
+          format: date-time
+          description: 'Campaign start date'
+        end_date:
+          type: string
+          format: date-time
+          description: 'Campaign end date'
+        is_active:
+          type: boolean
+          default: true
+          description: 'Whether the campaign is active'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # BlogPost Schema
+    BlogPost:
+      type: object
+      required: [title, content, author_id]
+      properties:
+        _id:
+          type: string
+          description: 'Unique identifier for the blog post'
+        title:
+          type: string
+          maxLength: 200
+          description: 'Blog post title'
+          example: 'Top 10 Fashion Trends for 2025'
+        slug:
+          type: string
+          description: 'URL-friendly slug'
+          example: 'top-10-fashion-trends-2025'
+        content:
+          type: string
+          description: 'Blog post content (HTML)'
+        excerpt:
+          type: string
+          maxLength: 500
+          description: 'Brief excerpt of the post'
+        author_id:
+          type: string
+          description: 'Reference to the author (User)'
+        featured_image:
+          type: string
+          format: uri
+          description: 'Featured image URL'
+        tags:
+          type: array
+          items:
+            type: string
+          description: 'Blog post tags'
+          example: ['fashion', 'trends', '2025']
+        is_published:
+          type: boolean
+          default: false
+          description: 'Whether the post is published'
+        published_at:
+          type: string
+          format: date-time
+          description: 'Publication date'
+        view_count:
+          type: integer
+          minimum: 0
+          description: 'Number of views'
+          example: 1250
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time

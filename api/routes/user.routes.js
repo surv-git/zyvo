@@ -447,7 +447,7 @@ router.delete('/:id', authMiddleware, userController.deleteUser);
  *       500:
  *         description: Internal server error
  */
-router.get('/admin/users/trends/registrations', authMiddleware, adminAuthMiddleware, userController.getUserRegistrationTrends);
+router.get('/users/trends/registrations', authMiddleware, adminAuthMiddleware, userController.getUserRegistrationTrends);
 
 /**
  * @swagger
@@ -491,7 +491,7 @@ router.get('/admin/users/trends/registrations', authMiddleware, adminAuthMiddlew
  *       500:
  *         description: Internal server error
  */
-router.get('/admin/users/trends/active', authMiddleware, adminAuthMiddleware, userController.getActiveUsersCount);
+router.get('/users/trends/active', authMiddleware, adminAuthMiddleware, userController.getActiveUsersCount);
 
 /**
  * @swagger
@@ -548,7 +548,7 @@ router.get('/admin/users/trends/active', authMiddleware, adminAuthMiddleware, us
  *       500:
  *         description: Internal server error
  */
-router.get('/admin/users/trends/top-activity', authMiddleware, adminAuthMiddleware, userController.getTopUsersByActivity);
+router.get('/users/trends/top-activity', authMiddleware, adminAuthMiddleware, userController.getTopUsersByActivity);
 
 /**
  * @swagger
@@ -582,6 +582,6 @@ router.get('/admin/users/trends/top-activity', authMiddleware, adminAuthMiddlewa
  *       500:
  *         description: Internal server error
  */
-router.get('/admin/users/trends/roles', authMiddleware, adminAuthMiddleware, userController.getUserRoleDistribution);
+router.get('/users/trends/roles', authMiddleware, adminAuthMiddleware, userController.getUserRoleDistribution);
 
 module.exports = router;

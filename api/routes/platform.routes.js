@@ -7,6 +7,7 @@
 const express = require('express');
 const router = express.Router();
 const { body, query, param } = require('express-validator');
+const { authMiddleware } = require('../middleware/auth.middleware');
 const { adminAuthMiddleware } = require('../middleware/admin.middleware');
 const platformController = require('../controllers/platform.controller');
 
@@ -92,9 +93,13 @@ const platformValidationRules = {
       .toInt(),
     query('is_active')
       .optional()
-      .isBoolean()
-      .withMessage('is_active must be a boolean value')
-      .toBoolean(),
+      .custom((value) => {
+        if (value === 'true') return true;
+        if (value === 'false') return false;
+        if (typeof value === 'boolean') return value;
+        throw new Error('is_active must be "true", "false", or a boolean');
+      })
+      .withMessage('is_active must be a boolean value'),
     query('search')
       .optional()
       .isLength({ min: 1, max: 100 })
@@ -305,6 +310,7 @@ const platformValidationRules = {
  *         description: Internal server error
  */
 router.post('/', 
+  authMiddleware,
   adminAuthMiddleware, 
   platformValidationRules.create, 
   platformController.createPlatform
@@ -378,6 +384,7 @@ router.post('/',
  *         description: Internal server error
  */
 router.get('/', 
+  authMiddleware,
   adminAuthMiddleware, 
   platformValidationRules.list, 
   platformController.getAllPlatforms
@@ -426,6 +433,7 @@ router.get('/',
  *         description: Internal server error
  */
 router.get('/:identifier', 
+  authMiddleware,
   adminAuthMiddleware, 
   platformController.getPlatformByIdOrSlug
 );
@@ -508,6 +516,7 @@ router.get('/:identifier',
  *         description: Internal server error
  */
 router.patch('/:id', 
+  authMiddleware,
   adminAuthMiddleware, 
   platformValidationRules.objectId,
   platformValidationRules.update, 
@@ -547,6 +556,7 @@ router.patch('/:id',
  *         description: Internal server error
  */
 router.delete('/:id', 
+  authMiddleware,
   adminAuthMiddleware, 
   platformValidationRules.objectId,
   platformController.deletePlatform

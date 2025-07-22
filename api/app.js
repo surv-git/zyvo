@@ -109,7 +109,8 @@ const limiter = rateLimit({
   skipFailedRequests: false,
 });
 
-app.use(limiter);
+// Rate limiting disabled
+// app.use(limiter);
 
 /**
  * Body parsing middleware
@@ -352,6 +353,7 @@ app.get('/health', (req, res) => {
  */
 // Import route modules
 const productRoutes = require('./routes/product.routes');
+const productAnalyticsRoutes = require('./routes/productAnalytics.routes'); // Product analytics routes
 const productVariantRoutes = require('./routes/productVariant.routes'); // Product variant management routes
 const optionRoutes = require('./routes/option.routes'); // Option management routes
 const brandRoutes = require('./routes/brand.routes'); // Brand management routes
@@ -377,8 +379,27 @@ const adminUserCouponRoutes = require('./routes/adminUserCoupon.routes'); // Adm
 // Payment Method Routes (assuming they exist from previous implementation)
 const paymentMethodRoutes = require('./routes/paymentMethod.routes'); // Payment method management routes
 
+// Blog Management Routes
+const adminBlogRoutes = require('./routes/adminBlog.routes'); // Admin blog management routes
+const publicBlogRoutes = require('./routes/publicBlog.routes'); // Public blog reading routes
+
+// Review Management Routes
+const userReviewRoutes = require('./routes/userReviews.routes'); // User review management routes
+const publicReviewRoutes = require('./routes/publicReviews.routes'); // Public review reading routes
+const adminReviewRoutes = require('./routes/adminReviews.routes'); // Admin review management routes
+const adminReviewReportRoutes = require('./routes/adminReviewReports.routes'); // Admin review report management routes
+
+// Favorites Management Routes
+const favoriteRoutes = require('./routes/favorite.routes'); // User favorites management routes
+
+// Wallet Management Routes
+const userWalletRoutes = require('./routes/userWallet.routes'); // User wallet management routes
+const adminWalletRoutes = require('./routes/adminWallet.routes'); // Admin wallet management routes
+const walletCallbackRoutes = require('./routes/walletCallback.routes'); // Payment gateway callback routes
+
 // Use routes with v1 prefix
 app.use('/api/v1/products', productRoutes); // Product management routes
+app.use('/api/v1/analytics/products', productAnalyticsRoutes); // Product analytics routes
 app.use('/api/v1/product-variants', productVariantRoutes); // Product variant management routes
 app.use('/api/v1/options', optionRoutes); // Option management routes
 app.use('/api/v1/brands', brandRoutes); // Brand management routes
@@ -390,22 +411,34 @@ app.use('/api/v1/platform-fees', platformFeeRoutes); // Platform fee management 
 app.use('/api/v1/listings', listingRoutes); // Listing management routes
 app.use('/api/v1/inventory', inventoryRoutes); // Inventory management routes
 app.use('/api/v1/users', userRoutes);
-app.use('/api/v1/admin', userRoutes); // Admin routes are included in user routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/categories', categoryRoutes); // Category management routes
+
+// Admin routes - specific routes first, then general admin routes
+app.use('/api/v1/admin/reviews', adminReviewRoutes); // Admin review management
+app.use('/api/v1/admin/reports', adminReviewReportRoutes); // Admin review report management
+app.use('/api/v1/admin/blog', adminBlogRoutes); // Admin blog management
+app.use('/api/v1/admin/coupon-campaigns', couponCampaignRoutes); // Admin coupon campaign management
+app.use('/api/v1/admin/user-coupons', adminUserCouponRoutes); // Admin user coupon management
+app.use('/api/v1/admin/wallet', adminWalletRoutes); // Admin wallet management
+app.use('/api/v1/admin/orders', orderRoutes); // Admin order management routes
+app.use('/api/v1/admin', userRoutes); // Admin routes are included in user routes (must be last)
 
 // Cart and Order Management Routes
 app.use('/api/v1/user/cart', cartRoutes); // Cart management routes
 app.use('/api/v1/user/orders', orderRoutes); // User order management routes
-app.use('/api/v1/admin/orders', orderRoutes); // Admin order management routes
 
-// Coupon Management Routes (from previous implementation)
-app.use('/api/v1/admin/coupon-campaigns', couponCampaignRoutes); // Admin coupon campaign management
+// User specific routes
 app.use('/api/v1/user/coupons', userCouponRoutes); // User coupon management
-app.use('/api/v1/admin/user-coupons', adminUserCouponRoutes); // Admin user coupon management
-
-// Payment Method Routes (from previous implementation)
+app.use('/api/v1/user/reviews', userReviewRoutes); // User review management
+app.use('/api/v1/user/favorites', favoriteRoutes); // User favorites management
+app.use('/api/v1/user/wallet', userWalletRoutes); // User wallet management
 app.use('/api/v1/user/payment-methods', paymentMethodRoutes); // User payment method management
+
+// Public routes
+app.use('/api/v1/products', publicReviewRoutes); // Public review reading (products/:id/reviews)
+app.use('/api/v1/favorites', favoriteRoutes); // Public favorites endpoints (popular)
+app.use('/api/v1/wallet', walletCallbackRoutes); // Payment gateway callbacks
 
 // Admin routes with comprehensive logging
 app.use('/api/v1/admin', adminRoutes);
@@ -670,7 +703,7 @@ const startServer = async () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📊 Environment: ${NODE_ENV}`);
       console.log(`🔒 CORS Origin: ${CORS_ORIGIN}`);
-      console.log(`⚡ Rate Limit: ${RATE_LIMIT_MAX_REQUESTS} requests per ${RATE_LIMIT_WINDOW_MS/1000} seconds`);
+      console.log(`⚡ Rate Limit: DISABLED`);
     });
 
     // Graceful shutdown

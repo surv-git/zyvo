@@ -69,6 +69,14 @@ exports.createUser = async (req, res, next) => {
  */
 exports.getAllUsers = async (req, res, next) => {
   try {
+    // Check if user is authenticated
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
     const {
       page = 1,
       limit = 10,
@@ -83,17 +91,17 @@ exports.getAllUsers = async (req, res, next) => {
       order = 'desc'
     } = req.query;
 
-    // Convert page and limit to integers
-    const pageNumber = parseInt(page, 10);
-    const limitNumber = parseInt(limit, 10);
+    // Convert page and limit to integers with validation
+    const pageNumber = Math.max(1, parseInt(page, 10) || 1);
+    const limitNumber = Math.min(100, Math.max(1, parseInt(limit, 10) || 10));
     const skip = (pageNumber - 1) * limitNumber;
 
     // Build dynamic query object
     const query = {};
 
     // Search functionality - case-insensitive partial match across multiple fields
-    if (search) {
-      const searchRegex = new RegExp(search, 'i');
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
       query.$or = [
         { name: searchRegex },
         { email: searchRegex },
@@ -103,8 +111,8 @@ exports.getAllUsers = async (req, res, next) => {
     }
 
     // Role filtering
-    if (role) {
-      query.role = role;
+    if (role && role.trim()) {
+      query.role = role.trim();
     }
 
     // Activity status filtering (admin only for inactive users)
@@ -125,31 +133,49 @@ exports.getAllUsers = async (req, res, next) => {
     }
 
     // Date range filtering for createdAt
-    if (min_createdAt || max_createdAt) {
+    if ((min_createdAt && min_createdAt.trim()) || (max_createdAt && max_createdAt.trim())) {
       query.createdAt = {};
-      if (min_createdAt) {
-        query.createdAt.$gte = new Date(min_createdAt);
+      if (min_createdAt && min_createdAt.trim()) {
+        const minDate = new Date(min_createdAt.trim());
+        if (!isNaN(minDate.getTime())) {
+          query.createdAt.$gte = minDate;
+        }
       }
-      if (max_createdAt) {
-        query.createdAt.$lte = new Date(max_createdAt);
+      if (max_createdAt && max_createdAt.trim()) {
+        const maxDate = new Date(max_createdAt.trim());
+        if (!isNaN(maxDate.getTime())) {
+          query.createdAt.$lte = maxDate;
+        }
       }
     }
 
     // Date range filtering for lastLogin
-    if (min_lastLoginAt || max_lastLoginAt) {
+    if ((min_lastLoginAt && min_lastLoginAt.trim()) || (max_lastLoginAt && max_lastLoginAt.trim())) {
       query.lastLogin = {};
-      if (min_lastLoginAt) {
-        query.lastLogin.$gte = new Date(min_lastLoginAt);
+      if (min_lastLoginAt && min_lastLoginAt.trim()) {
+        const minDate = new Date(min_lastLoginAt.trim());
+        if (!isNaN(minDate.getTime())) {
+          query.lastLogin.$gte = minDate;
+        }
       }
-      if (max_lastLoginAt) {
-        query.lastLogin.$lte = new Date(max_lastLoginAt);
+      if (max_lastLoginAt && max_lastLoginAt.trim()) {
+        const maxDate = new Date(max_lastLoginAt.trim());
+        if (!isNaN(maxDate.getTime())) {
+          query.lastLogin.$lte = maxDate;
+        }
       }
     }
 
-    // Build sort object
-    const sortOrder = order === 'desc' ? -1 : 1;
+    // Build sort object with validation
+    const validSortFields = ['createdAt', 'updatedAt', 'name', 'email', 'role', 'lastLogin'];
+    const validSortOrders = ['asc', 'desc'];
+    
+    const sortField = validSortFields.includes(sort) ? sort : 'createdAt';
+    const sortOrder = validSortOrders.includes(order) ? order : 'desc';
+    const sortDirection = sortOrder === 'desc' ? -1 : 1;
+    
     const sortObj = {};
-    sortObj[sort] = sortOrder;
+    sortObj[sortField] = sortDirection;
 
     // Execute query with pagination
     const users = await User.find(query)
@@ -175,7 +201,29 @@ exports.getAllUsers = async (req, res, next) => {
       }
     });
   } catch (error) {
-    next(error);
+    console.error('Error in getAllUsers:', error);
+    
+    // Handle specific error types
+    if (error.name === 'CastError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid parameter format'
+      });
+    }
+    
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        details: error.message
+      });
+    }
+    
+    // Default error response
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error while fetching users'
+    });
   }
 };
 
@@ -412,6 +460,69 @@ exports.deleteUser = async (req, res, next) => {
 };
 
 /**
+ * Request email verification
+ * @route POST /api/v1/auth/request-email-verification
+ * @access Public
+ * @description Initiates the email verification process by sending a verification link/code to the user's registered email address.
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
+ */
+exports.requestEmailVerification = async (req, res, next) => {
+  try {
+    // TODO: Add input validation (Joi/express-validator) for email
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required.'
+      });
+    }
+
+    // Find user by email
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User with the provided email not found.'
+      });
+    }
+
+    // Check if email is already verified
+    if (user.is_email_verified) {
+      return res.status(409).json({
+        success: false,
+        message: 'This email address has already been verified.'
+      });
+    }
+
+    // TODO: Implement rate limiting to prevent abuse
+    // For example, using express-rate-limit middleware on this route
+
+    // Generate a new verification token and expiry
+    const emailToken = generateEmailVerificationToken();
+    user.email_verification_token = emailToken;
+    user.email_verification_token_expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    await user.save();
+
+    // Send the verification email
+    await sendVerificationEmail(user.email, emailToken);
+
+    res.status(200).json({
+      success: true,
+      message: 'Email verification link sent successfully. Please check your inbox.'
+    });
+
+  } catch (error) {
+    // Log the error for debugging, especially for email sending failures
+    console.error('Error in requestEmailVerification:', error);
+    next(error);
+  }
+};
+
+/**
  * Get user registration trends (Admin only)
  * @route GET /api/admin/users/trends/registrations
  * @access Private (Admin only)
@@ -506,9 +617,18 @@ exports.getActiveUsersCount = async (req, res, next) => {
   try {
     const { lastActivityDays = 30 } = req.query;
 
+    // Validate and parse lastActivityDays parameter
+    const activityDays = parseInt(lastActivityDays, 10);
+    if (isNaN(activityDays) || activityDays < 1 || activityDays > 365) {
+      return res.status(400).json({
+        success: false,
+        message: 'lastActivityDays must be a valid number between 1 and 365'
+      });
+    }
+
     // Calculate date threshold
     const thresholdDate = new Date();
-    thresholdDate.setDate(thresholdDate.getDate() - parseInt(lastActivityDays, 10));
+    thresholdDate.setDate(thresholdDate.getDate() - activityDays);
 
     const activeUsers = await User.countDocuments({
       isActive: true,
@@ -519,12 +639,16 @@ exports.getActiveUsersCount = async (req, res, next) => {
       success: true,
       data: {
         activeUsers,
-        period: `${lastActivityDays} days`,
+        period: `${activityDays} days`,
         thresholdDate
       }
     });
   } catch (error) {
-    next(error);
+    console.error('Error in getActiveUsersCount:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error while fetching active users count'
+    });
   }
 };
 

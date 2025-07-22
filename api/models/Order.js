@@ -200,6 +200,21 @@ orderSchema.index({ order_status: 1, createdAt: -1 });
 orderSchema.index({ payment_status: 1, createdAt: -1 });
 orderSchema.index({ user_id: 1, order_status: 1 });
 
+/**
+ * Generate unique order number
+ * Format: YYYYMMDD + 6 random alphanumeric characters
+ */
+function generateOrderNumber() {
+  const now = new Date();
+  const dateStr = now.getFullYear().toString() + 
+                  (now.getMonth() + 1).toString().padStart(2, '0') + 
+                  now.getDate().toString().padStart(2, '0');
+  
+  const randomStr = crypto.randomBytes(3).toString('hex').toUpperCase();
+  
+  return `${dateStr}${randomStr}`;
+}
+
 // Pre-save hooks
 orderSchema.pre('save', function(next) {
   this.updatedAt = new Date();
@@ -370,20 +385,5 @@ orderSchema.virtual('formatted_order_number').get(function() {
 // Ensure virtuals are included in JSON output
 orderSchema.set('toJSON', { virtuals: true });
 orderSchema.set('toObject', { virtuals: true });
-
-/**
- * Generate unique order number
- * Format: YYYYMMDD + 6 random alphanumeric characters
- */
-function generateOrderNumber() {
-  const now = new Date();
-  const dateStr = now.getFullYear().toString() + 
-                  (now.getMonth() + 1).toString().padStart(2, '0') + 
-                  now.getDate().toString().padStart(2, '0');
-  
-  const randomStr = crypto.randomBytes(3).toString('hex').toUpperCase();
-  
-  return `${dateStr}${randomStr}`;
-}
 
 module.exports = mongoose.model('Order', orderSchema);

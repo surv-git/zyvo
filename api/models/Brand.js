@@ -19,7 +19,7 @@ const brandSchema = new mongoose.Schema({
   },
   slug: {
     type: String,
-    required: true,
+    required: false, // Set by pre-save middleware
     unique: true,
     lowercase: true,
     trim: true,
@@ -117,6 +117,10 @@ brandSchema.pre('save', async function(next) {
     
     // Generate slug from name if name is modified or this is a new document
     if (this.isModified('name') || this.isNew) {
+      if (!this.name) {
+        return next(new Error('Name is required to generate slug'));
+      }
+      
       let baseSlug = this.name
         .toLowerCase()
         .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
@@ -137,6 +141,11 @@ brandSchema.pre('save', async function(next) {
       }
       
       this.slug = slug;
+    }
+    
+    // Ensure slug is always present
+    if (!this.slug) {
+      return next(new Error('Slug generation failed'));
     }
     
     next();

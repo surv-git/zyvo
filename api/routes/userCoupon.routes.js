@@ -9,10 +9,10 @@ const { body, param, query } = require('express-validator');
 const router = express.Router();
 
 const userCouponController = require('../controllers/userCoupon.controller');
-const userAuthMiddleware = require('../middleware/userAuth.middleware');
+const { authMiddleware } = require('../middleware/auth.middleware');
 
 // Apply user authentication to all routes
-router.use(userAuthMiddleware);
+router.use(authMiddleware);
 
 /**
  * Validation middleware for applying coupons

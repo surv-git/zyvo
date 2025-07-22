@@ -14,7 +14,7 @@ const UserCoupon = require('../models/UserCoupon');
 const CouponCampaign = require('../models/CouponCampaign');
 const PaymentMethod = require('../models/PaymentMethod');
 const userAuditLogger = require('../middleware/userAuditLogger');
-const adminAuditLogger = require('../middleware/adminAuditLogger');
+const adminAuditLogger = require('../loggers/adminAudit.logger');
 const mongoose = require('mongoose');
 
 /**

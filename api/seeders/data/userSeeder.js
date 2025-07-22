@@ -36,10 +36,32 @@ const generateUsers = async (count = 50) => {
   };
   users.push(testUser);
   
-  // Generate random users
+  // Generate random users with mix of faker-generated and specific Indian names
+  const indianFirstNames = [
+    'Aarav', 'Vivaan', 'Aditya', 'Vihaan', 'Arjun', 'Sai', 'Reyansh', 'Ayaan', 'Krishna', 'Ishaan',
+    'Ananya', 'Diya', 'Aadhya', 'Kavya', 'Advika', 'Saanvi', 'Arya', 'Sara', 'Myra', 'Aanya',
+    'Rahul', 'Amit', 'Rohit', 'Vikash', 'Suresh', 'Raj', 'Priya', 'Sunita', 'Neha', 'Pooja',
+    'Ravi', 'Sandeep', 'Ajay', 'Deepak', 'Manoj', 'Shreya', 'Kavitha', 'Meera', 'Divya', 'Rekha'
+  ];
+  
+  const indianLastNames = [
+    'Sharma', 'Verma', 'Singh', 'Kumar', 'Gupta', 'Agarwal', 'Jain', 'Bansal', 'Malhotra', 'Chopra',
+    'Patel', 'Shah', 'Mehta', 'Joshi', 'Desai', 'Reddy', 'Rao', 'Nair', 'Iyer', 'Menon',
+    'Yadav', 'Mishra', 'Tiwari', 'Srivastava', 'Pandey', 'Chandra', 'Bhatia', 'Kapoor', 'Arora', 'Sethi'
+  ];
+
   for (let i = 0; i < count - 2; i++) {
-    const firstName = faker.person.firstName();
-    const lastName = faker.person.lastName();
+    let firstName, lastName;
+    
+    // Use specific Indian names 60% of the time, faker-generated 40% of the time
+    if (faker.datatype.boolean({ probability: 0.6 })) {
+      firstName = faker.helpers.arrayElement(indianFirstNames);
+      lastName = faker.helpers.arrayElement(indianLastNames);
+    } else {
+      firstName = faker.person.firstName();
+      lastName = faker.person.lastName();
+    }
+    
     const email = faker.internet.email({ firstName, lastName }).toLowerCase();
     
     const user = {
@@ -72,25 +94,45 @@ const seed = async (UserModel) => {
     const users = await generateUsers(50);
     
     console.log('   💾 Inserting users into database...');
-    const result = await UserModel.insertMany(users);
     
-    // Count by role
-    const adminCount = result.filter(u => u.role === 'admin').length;
-    const userCount = result.filter(u => u.role === 'user').length;
-    const activeCount = result.filter(u => u.isActive).length;
+    const insertedUsers = [];
+    const skippedUsers = [];
+    
+    // Insert users one by one to handle duplicates gracefully
+    for (const userData of users) {
+      try {
+        const existingUser = await UserModel.findOne({ email: userData.email });
+        if (existingUser) {
+          skippedUsers.push(userData);
+          console.log(`   ⚠️  Skipping duplicate email: ${userData.email}`);
+          continue;
+        }
+        
+        const user = new UserModel(userData);
+        const savedUser = await user.save();
+        insertedUsers.push(savedUser);
+      } catch (error) {
+        if (error.code === 11000) {
+          skippedUsers.push(userData);
+          console.log(`   ⚠️  Skipping duplicate: ${userData.email}`);
+        } else {
+          console.error(`   ❌ Failed to create user ${userData.email}:`, error.message);
+        }
+      }
+    }
+    
+    // Count by role for inserted users only
+    const adminCount = insertedUsers.filter(u => u.role === 'admin').length;
+    const userCount = insertedUsers.filter(u => u.role === 'user').length;
+    const activeCount = insertedUsers.filter(u => u.isActive).length;
     
     return {
-      count: result.length,
-      summary: `${adminCount} admins, ${userCount} users, ${activeCount} active accounts`
+      count: insertedUsers.length,
+      summary: `${adminCount} admins, ${userCount} users, ${activeCount} active accounts (${skippedUsers.length} duplicates skipped)`
     };
     
   } catch (error) {
-    if (error.code === 11000) {
-      // Handle duplicate key error
-      const duplicateField = Object.keys(error.keyPattern)[0];
-      throw new Error(`Duplicate ${duplicateField} found. Some users may already exist.`);
-    }
-    throw error;
+    throw new Error(`Failed to seed users: ${error.message}`);
   }
 };
 
