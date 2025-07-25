@@ -21,20 +21,46 @@ export class ApiClient {
     options: RequestInit = {}
   ): Promise<T> {
     const url = buildUrl(endpoint);
+    const method = options.method || 'GET';
     
-    const response = await fetch(url, {
+    // Get auth token from sessionStorage and add to headers
+    const authToken = sessionStorage.getItem('auth_token');
+    const authHeaders: Record<string, string> = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
+    
+    console.log('🔐 API Client - Auth token exists:', !!authToken);
+    console.log('🔐 API Client - Making request to:', url);
+    console.log('🔄 API Client - HTTP Method (UPDATED VERSION):', method);
+    console.log('🔄 API Client - Request options (UPDATED):', options);
+    
+    // Force PATCH for order updates - explicit override
+    if (endpoint.includes('/admin/orders/') && method === 'PATCH') {
+      console.log('🔄 API Client - FORCING PATCH for order update');
+    }
+    
+    const fetchOptions = {
       ...options,
+      method, // Explicitly set the method
       headers: {
         ...this.defaultHeaders,
-        ...options.headers,
+        ...authHeaders,
+        ...(options.headers as Record<string, string> || {}),
       },
-      credentials: 'include',
-    });
+      credentials: 'include' as RequestCredentials,
+    };
+    
+    console.log('🔄 API Client - Final fetch options (UPDATED):', fetchOptions);
+    
+    const response = await fetch(url, fetchOptions);
 
     if (!response.ok) {
       // Handle token expiration
       if (response.status === 401) {
-        this.handleTokenExpiration();
+        console.log('🔐 Auth Debug - 401 Unauthorized received');
+        console.log('🔐 Auth Debug - Auth token:', sessionStorage.getItem('auth_token') ? 'EXISTS' : 'MISSING');
+        console.log('🔐 Auth Debug - User data:', sessionStorage.getItem('user_data') ? 'EXISTS' : 'MISSING');
+        console.log('🔐 Auth Debug - Refresh token:', sessionStorage.getItem('refresh_token') ? 'EXISTS' : 'MISSING');
+        console.log('🔐 Auth Debug - Not redirecting to login for debugging purposes');
+        // this.handleTokenExpiration(); // Commented out to prevent redirect
       }
       throw new Error(`API Error: ${response.status}`);
     }

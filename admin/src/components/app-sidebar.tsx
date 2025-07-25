@@ -4,7 +4,9 @@ import * as React from "react"
 import { useEffect, useRef, useMemo, useState, useCallback } from "react"
 import { usePathname } from "next/navigation"
 import {
+  BadgeQuestionMarkIcon,
   Command,
+  CreditCard,
   Database,
   Frame,
   LifeBuoy,
@@ -15,6 +17,7 @@ import {
   Send,
   Settings2,
   SquareTerminal,
+  Ticket,
   Users,
 } from "lucide-react"
 
@@ -40,19 +43,21 @@ const sidebarData = {
   navMain: [
     {
       title: "Dashboard",
-      url: "/dashboard",
       icon: SquareTerminal,
       isActive: false,
       items: [
         {
-          title: "Admin Dashboard",
+          title: "Overview",
           url: "/dashboard",
+        },
+        {
+          title: "Health Check",
+          url: "/health",
         },
       ],
     },
     {
       title: "User Management",
-      url: "/users",
       icon: Users,
       isActive: false,
       items: [
@@ -61,18 +66,29 @@ const sidebarData = {
           url: "/users",
         },
         {
-          title: "User Management",
+          title: "Manage Users",
           url: "/users/manage",
         },
         {
           title: "Registration Trends",
           url: "/users/trends",
         },
+        {
+          title: "Addresses",
+          url: "/addresses",
+        },
+        {          
+          title: "Payment Methods",
+          url: "/payment-methods",
+        },
+        {
+          title: "Wallets",
+          url: "/wallets",
+        },
       ],
     },
     {
-      title: "Product Catalog",
-      url: "/products",
+      title: "Catalog Management",
       icon: Package,
       isActive: false,
       items: [
@@ -81,36 +97,16 @@ const sidebarData = {
           url: "/products",
         },
         {
-          title: "Product Stats",
-          url: "/products/stats",
+          title: "Product Variants",
+          url: "/product-variants",
         },
         {
           title: "Categories",
           url: "/categories",
         },
         {
-          title: "Category Tree",
-          url: "/categories/tree",
-        },
-        {
-          title: "Category Stats",
-          url: "/categories/stats",
-        },
-        {
           title: "Brands",
           url: "/brands",
-        },
-        {
-          title: "Brand Stats",
-          url: "/brands/stats",
-        },
-        {
-          title: "Product Variants",
-          url: "/product-variants",
-        },
-        {
-          title: "Variant Stats",
-          url: "/product-variants/stats",
         },
         {
           title: "Options",
@@ -119,39 +115,10 @@ const sidebarData = {
       ],
     },
     {
-      title: "Purchases & Suppliers",
-      url: "/purchases",
-      icon: Package,
-      isActive: false,
-      items: [
-        {
-          title: "All Purchases",
-          url: "/purchases",
-        },
-        {
-          title: "Suppliers",
-          url: "/suppliers",
-        },
-        {
-          title: "Purchase Orders",
-          url: "/purchase-orders",
-        },
-        {
-          title: "Supplier Reports",
-          url: "/suppliers/reports",
-        },
-      ],
-    },
-    {
-      title: "Platform & Inventory",
-      url: "/platforms",
+      title: "Inventory & Listings",
       icon: Database,
       isActive: false,
       items: [
-        {
-          title: "Platforms",
-          url: "/platforms",
-        },
         {
           title: "Inventory",
           url: "/inventory",
@@ -160,16 +127,88 @@ const sidebarData = {
           title: "Listings",
           url: "/listings",
         },
+        {
+          title: "Platforms",
+          url: "/platforms",
+        },
       ],
     },
     {
-      title: "Reviews Management",
-      url: "/reviews",
+      title: "Order Management",
+      icon: CreditCard,
+      isActive: false,
+      items: [
+        {
+          title: "All Orders",
+          url: "/orders",
+        },
+        {
+          title: "Order Fulfillment",
+          url: "/orders/fulfillment",
+        },
+        {
+          title: "Shopping Carts",
+          url: "/carts",
+        },
+      ],
+    },
+    {
+      title: "Procurement",
+      icon: Package,
+      isActive: false,
+      items: [
+        {
+          title: "Purchases",
+          url: "/purchases",
+        },
+        {
+          title: "Purchase Orders",
+          url: "/purchase-orders",
+        },
+        {
+          title: "Suppliers",
+          url: "/suppliers",
+        },
+        {
+          title: "Supplier Reports",
+          url: "/suppliers/reports",
+        },
+      ],
+    },
+    {
+      title: "Marketing & Promotions",
+      icon: Ticket,
+      isActive: false,
+      items: [
+        {
+          title: "Coupons",
+          url: "/coupons",
+        },
+        {
+          title: "Create Coupon",
+          url: "/coupons/create",
+        },
+        {
+          title: "Campaigns",
+          url: "/coupon-campaigns",
+        },
+        {
+          title: "Campaign Analytics",
+          url: "/coupon-campaigns/analytics",
+        },
+        {
+          title: "Usage Reports",
+          url: "/coupons/reports",
+        },
+      ],
+    },
+    {
+      title: "Content & Reviews",
       icon: MessageSquare,
       isActive: false,
       items: [
         {
-          title: "All Reviews",
+          title: "Reviews",
           url: "/reviews",
         },
         {
@@ -184,29 +223,63 @@ const sidebarData = {
           title: "Report Reviews",
           url: "/reviews/report",
         },
+        {
+          title: "Blog Posts",
+          url: "/blog",
+        },
+        {
+          title: "User Favorites",
+          url: "/favorites",
+        },
+        {
+          title: "Dynamic Content",
+          url: "/dynamic-contents",
+        },
       ],
     },
     {
-      title: "System Settings & Reports",
-      url: "/settings",
-      icon: Settings2,
+      title: "Analytics & Reports",
+      icon: PieChart,
       isActive: false,
       items: [
-        {
-          title: "Notifications",
-          url: "/notifications",
-        },
-        {
-          title: "System Settings",
-          url: "/settings",
-        },
         {
           title: "Sales Reports",
           url: "/reports/sales",
         },
         {
-          title: "Health Check",
-          url: "/health",
+          title: "Order Reports",
+          url: "/orders/reports",
+        },
+        {
+          title: "Product Analytics",
+          url: "/products/stats",
+        },
+        {
+          title: "Category Analytics",
+          url: "/categories/stats",
+        },
+        {
+          title: "Brand Analytics",
+          url: "/brands/stats",
+        },
+        {
+          title: "Variant Analytics",
+          url: "/product-variants/stats",
+        },
+      ],
+    },
+    {
+      title: "System Administration",
+      icon: Settings2,
+      isActive: false,
+      items: [        
+        {
+          title: "System Settings",
+          url: "/settings",
+        },
+        {
+          title: "Notifications",
+          url: "/notifications",
         },
       ],
     },
@@ -214,12 +287,17 @@ const sidebarData = {
   navSecondary: [
     {
       title: "Support",
-      url: "#",
+      url: "/support",
       icon: LifeBuoy,
     },
     {
+      title: "FAQ",
+      url: "/faq",
+      icon: BadgeQuestionMarkIcon,
+    },
+    {
       title: "Feedback",
-      url: "#",
+      url: "/feedback",
       icon: Send,
     },
   ],
@@ -267,12 +345,6 @@ const AppSidebarComponent = ({ ...props }: React.ComponentProps<typeof Sidebar>)
     
     // Check each nav item and its sub-items to find a match
     sidebarData.navMain.forEach((navItem, index) => {
-      // Check if current path matches the nav item's main URL
-      if (currentPath === navItem.url) {
-        foundIndex = index
-        return
-      }
-      
       // Check if current path matches any of the nav item's sub-items
       const hasMatchingSubItem = navItem.items.some(item => 
         currentPath === item.url || currentPath.startsWith(item.url + '/')
@@ -415,15 +487,17 @@ const AppSidebarComponent = ({ ...props }: React.ComponentProps<typeof Sidebar>)
   }, []) // No dependencies to prevent re-running
 
   // Format user data for NavUser component - memoized to prevent re-renders
+  // Only authenticated admin users should reach this component
   const userData = useMemo(() => {
-    return user ? {
+    if (!user) {
+      // This should never happen in an admin panel - redirect to login
+      return null
+    }
+    
+    return {
       name: user.name,
       email: user.email,
       avatar: user.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.name)}`
-    } : {
-      name: "Guest User",
-      email: "guest@example.com",
-      avatar: "https://api.dicebear.com/7.x/initials/svg?seed=Guest"
     }
   }, [user])
 
@@ -456,9 +530,14 @@ const AppSidebarComponent = ({ ...props }: React.ComponentProps<typeof Sidebar>)
   // Memoized footer component
   const sidebarFooter = useMemo(() => (
     <SidebarFooter>
-      <NavUser user={userData} />
+      {userData && <NavUser user={userData} />}
     </SidebarFooter>
   ), [userData])
+
+  // Early return if no user - this component should not render for unauthenticated users
+  if (!user || !userData) {
+    return null
+  }
 
   return (
     <Sidebar {...props}>

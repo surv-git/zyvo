@@ -14,24 +14,21 @@ const crypto = require('crypto');
 
 // Encryption configuration
 const ENCRYPTION_KEY = process.env.PAYMENT_ENCRYPTION_KEY || crypto.randomBytes(32);
-const ALGORITHM = 'aes-256-gcm';
+const ALGORITHM = 'aes-256-cbc';
 
 // Encryption helper functions
 const encrypt = (text) => {
   if (!text) return text;
   
   const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipher(ALGORITHM, ENCRYPTION_KEY);
+  const cipher = crypto.createCipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
   
   let encrypted = cipher.update(text, 'utf8', 'hex');
   encrypted += cipher.final('hex');
   
-  const authTag = cipher.getAuthTag();
-  
   return {
     encrypted,
-    iv: iv.toString('hex'),
-    authTag: authTag.toString('hex')
+    iv: iv.toString('hex')
   };
 };
 
@@ -41,10 +38,8 @@ const decrypt = (encryptedData) => {
   }
   
   try {
-    const { encrypted, iv, authTag } = encryptedData;
-    const decipher = crypto.createDecipher(ALGORITHM, ENCRYPTION_KEY);
-    
-    decipher.setAuthTag(Buffer.from(authTag, 'hex'));
+    const { encrypted, iv } = encryptedData;
+    const decipher = crypto.createDecipheriv(ALGORITHM, ENCRYPTION_KEY, Buffer.from(iv, 'hex'));
     
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');
     decrypted += decipher.final('utf8');

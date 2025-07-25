@@ -359,8 +359,272 @@ const getWalletSummary = async (req, res, next) => {
  */
 
 /**
+ * ADMIN CONTROLLERS
+ */
+
+/**
+ * Get All Wallets (Admin)
+ * @route GET /api/v1/admin/wallet
+ * @access Admin only
+ */
+const getAllWalletsAdmin = async (req, res, next) => {
+  try {
+    const {
+      page = 1,
+      limit = 20,
+      sort_by = 'created_at',
+      sort_order = 'desc',
+      status,
+      min_balance,
+      max_balance,
+      user_id,
+      currency = 'INR',
+      date_from,
+      date_to,
+      search
+    } = req.query;
+
+    console.log('Admin Get All Wallets Debug:', {
+      query: req.query,
+      adminId: req.user?.id
+    });
+
+    // Build filter query
+    const filter = {};
+
+    if (status) {
+      filter.status = status;
+    }
+
+    if (currency) {
+      filter.currency = currency;
+    }
+
+    if (user_id) {
+      if (!mongoose.Types.ObjectId.isValid(user_id)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid user ID format'
+        });
+      }
+      filter.user_id = user_id;
+    }
+
+    // Balance range filtering
+    if (min_balance !== undefined || max_balance !== undefined) {
+      filter.balance = {};
+      if (min_balance !== undefined) {
+        filter.balance.$gte = parseFloat(min_balance);
+      }
+      if (max_balance !== undefined) {
+        filter.balance.$lte = parseFloat(max_balance);
+      }
+    }
+
+    // Date range filtering
+    if (date_from || date_to) {
+      filter.createdAt = {};
+      if (date_from) {
+        filter.createdAt.$gte = new Date(date_from);
+      }
+      if (date_to) {
+        filter.createdAt.$lte = new Date(date_to);
+      }
+    }
+
+    // Pagination
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    // Sort configuration
+    const validSortFields = ['created_at', 'updated_at', 'balance', 'last_transaction_at'];
+    const sortField = validSortFields.includes(sort_by) ? sort_by : 'created_at';
+    const sortDirection = sort_order === 'asc' ? 1 : -1;
+    const sortObj = { [sortField]: sortDirection };
+
+    // Build aggregation pipeline
+    const pipeline = [
+      { $match: filter }
+    ];
+
+    // Add user lookup and search if provided
+    if (search) {
+      pipeline.push(
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'user_id',
+            foreignField: '_id',
+            as: 'user'
+          }
+        },
+        {
+          $unwind: '$user'
+        },
+        {
+          $match: {
+            $or: [
+              { 'user.email': { $regex: search, $options: 'i' } },
+              { 'user.first_name': { $regex: search, $options: 'i' } },
+              { 'user.last_name': { $regex: search, $options: 'i' } }
+            ]
+          }
+        }
+      );
+    } else {
+      pipeline.push(
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'user_id',
+            foreignField: '_id',
+            as: 'user'
+          }
+        },
+        {
+          $unwind: '$user'
+        }
+      );
+    }
+
+    // Add sorting
+    pipeline.push({ $sort: sortObj });
+
+    // Get total count for pagination
+    const totalPipeline = [...pipeline, { $count: 'total' }];
+    const totalResult = await Wallet.aggregate(totalPipeline);
+    const total = totalResult[0]?.total || 0;
+
+    // Add pagination to main pipeline
+    pipeline.push(
+      { $skip: skip },
+      { $limit: limitNum }
+    );
+
+    // Project final fields
+    pipeline.push({
+      $project: {
+        _id: 1,
+        user_id: 1,
+        balance: 1,
+        currency: 1,
+        status: 1,
+        last_transaction_at: 1,
+        total_credited_amount: 1,
+        total_debited_amount: 1,
+        total_transactions_count: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        'user._id': 1,
+        'user.email': 1,
+        'user.first_name': 1,
+        'user.last_name': 1,
+        'user.phone': 1
+      }
+    });
+
+    // Execute aggregation
+    const wallets = await Wallet.aggregate(pipeline);
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(total / limitNum);
+    const hasNextPage = pageNum < totalPages;
+    const hasPrevPage = pageNum > 1;
+
+    // Calculate summary statistics
+    const statsResult = await Wallet.aggregate([
+      { $match: filter },
+      {
+        $group: {
+          _id: null,
+          total_wallets: { $sum: 1 },
+          total_balance: { $sum: { $toDouble: '$balance' } },
+          active_wallets: {
+            $sum: { $cond: [{ $eq: ['$status', 'ACTIVE'] }, 1, 0] }
+          },
+          blocked_wallets: {
+            $sum: { $cond: [{ $eq: ['$status', 'BLOCKED'] }, 1, 0] }
+          },
+          inactive_wallets: {
+            $sum: { $cond: [{ $eq: ['$status', 'INACTIVE'] }, 1, 0] }
+          },
+          avg_balance: { $avg: { $toDouble: '$balance' } }
+        }
+      }
+    ]);
+
+    const stats = statsResult[0] || {
+      total_wallets: 0,
+      total_balance: 0,
+      active_wallets: 0,
+      blocked_wallets: 0,
+      inactive_wallets: 0,
+      avg_balance: 0
+    };
+
+    // Log admin activity
+    adminAuditLogger.info('Admin wallets viewed', {
+      admin_id: req.user.id,
+      admin_email: req.user.email,
+      action_type: 'VIEW_ALL_WALLETS',
+      resource_type: 'Wallet',
+      resource_id: null,
+      details: {
+        filter_applied: filter,
+        total_results: total,
+        page: pageNum,
+        limit: limitNum
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Wallets retrieved successfully',
+      data: {
+        wallets,
+        pagination: {
+          current_page: pageNum,
+          total_pages: totalPages,
+          total_count: total,
+          per_page: limitNum,
+          has_next_page: hasNextPage,
+          has_prev_page: hasPrevPage
+        },
+        summary: {
+          total_wallets: stats.total_wallets,
+          total_balance: parseFloat(stats.total_balance.toFixed(2)),
+          average_balance: parseFloat(stats.avg_balance.toFixed(2)),
+          active_wallets: stats.active_wallets,
+          blocked_wallets: stats.blocked_wallets,
+          inactive_wallets: stats.inactive_wallets
+        },
+        filters_applied: {
+          status,
+          currency,
+          min_balance,
+          max_balance,
+          user_id,
+          date_from,
+          date_to,
+          search
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Error getting all wallets (admin):', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve wallets',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+/**
  * Get User Wallet Details (Admin)
- * @route GET /api/v1/admin/wallet/:userId
+ * @route GET /api/v1/admin/wallets/user/:userId
  * @access Admin only
  */
 const getAdminUserWallet = async (req, res, next) => {
@@ -402,6 +666,138 @@ const getAdminUserWallet = async (req, res, next) => {
   } catch (error) {
     console.error('Error fetching admin user wallet:', error);
     next(error);
+  }
+};
+
+/**
+ * Get Wallet Details by Wallet ID (Admin)
+ * @route GET /api/v1/admin/wallets/:walletId
+ * @access Admin only
+ */
+const getWalletByIdAdmin = async (req, res, next) => {
+  try {
+    const { walletId } = req.params;
+
+    console.log('Admin Get Wallet by ID Debug:', {
+      walletId,
+      adminId: req.user?.id
+    });
+
+    if (!mongoose.Types.ObjectId.isValid(walletId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid wallet ID format'
+      });
+    }
+
+    // Get wallet with populated user details
+    const wallet = await Wallet.findById(walletId)
+      .populate('user_id', 'email first_name last_name phone')
+      .lean();
+
+    if (!wallet) {
+      return res.status(404).json({
+        success: false,
+        message: 'Wallet not found'
+      });
+    }
+
+    // Get recent transactions for this wallet
+    const recentTransactions = await WalletTransaction.find({ wallet_id: walletId })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .lean();
+
+    // Calculate transaction statistics
+    const transactionStats = await WalletTransaction.aggregate([
+      { $match: { wallet_id: new mongoose.Types.ObjectId(walletId) } },
+      {
+        $group: {
+          _id: null,
+          total_transactions: { $sum: 1 },
+          completed_transactions: {
+            $sum: { $cond: [{ $eq: ['$status', 'COMPLETED'] }, 1, 0] }
+          },
+          failed_transactions: {
+            $sum: { $cond: [{ $eq: ['$status', 'FAILED'] }, 1, 0] }
+          },
+          total_credited: {
+            $sum: {
+              $cond: [
+                { $and: [{ $eq: ['$transaction_type', 'CREDIT'] }, { $eq: ['$status', 'COMPLETED'] }] },
+                { $toDouble: '$amount' },
+                0
+              ]
+            }
+          },
+          total_debited: {
+            $sum: {
+              $cond: [
+                { $and: [{ $eq: ['$transaction_type', 'DEBIT'] }, { $eq: ['$status', 'COMPLETED'] }] },
+                { $toDouble: '$amount' },
+                0
+              ]
+            }
+          },
+          last_transaction_date: { $max: '$createdAt' }
+        }
+      }
+    ]);
+
+    const stats = transactionStats[0] || {
+      total_transactions: 0,
+      completed_transactions: 0,
+      failed_transactions: 0,
+      total_credited: 0,
+      total_debited: 0,
+      last_transaction_date: null
+    };
+
+    // Log admin activity
+    adminAuditLogger.info('Wallet details by ID viewed', {
+      admin_id: req.user.id,
+      admin_email: req.user.email,
+      action_type: 'VIEW_WALLET_BY_ID',
+      resource_type: 'Wallet',
+      resource_id: walletId,
+      details: {
+        wallet_id: walletId,
+        user_email: wallet.user_id?.email,
+        balance: wallet.balance
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Wallet details retrieved successfully',
+      data: {
+        wallet: {
+          ...wallet,
+          user: wallet.user_id
+        },
+        recent_transactions: recentTransactions,
+        stats: {
+          total_transactions: stats.total_transactions,
+          completed_transactions: stats.completed_transactions,
+          failed_transactions: stats.failed_transactions,
+          success_rate: stats.total_transactions > 0 
+            ? parseFloat(((stats.completed_transactions / stats.total_transactions) * 100).toFixed(1))
+            : 0,
+          total_credited: parseFloat(stats.total_credited.toFixed(2)),
+          total_debited: parseFloat(stats.total_debited.toFixed(2)),
+          net_flow: parseFloat((stats.total_credited - stats.total_debited).toFixed(2)),
+          last_transaction_date: stats.last_transaction_date
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching wallet by ID:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve wallet details',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 
@@ -481,7 +877,7 @@ const getAllWalletTransactionsAdmin = async (req, res, next) => {
 
 /**
  * Adjust Wallet Balance (Admin)
- * @route POST /api/v1/admin/wallet/:userId/adjust
+ * @route POST /api/v1/admin/wallets/user/:userId/adjust
  * @access Admin only
  */
 const adjustWalletBalance = async (req, res, next) => {
@@ -569,7 +965,7 @@ const adjustWalletBalance = async (req, res, next) => {
 
 /**
  * Update Wallet Status (Admin)
- * @route PATCH /api/v1/admin/wallet/:userId/status
+ * @route PATCH /api/v1/admin/wallets/user/:userId/status
  * @access Admin only
  */
 const updateWalletStatus = async (req, res, next) => {
@@ -674,7 +1070,9 @@ module.exports = {
   getWalletSummary,
 
   // Admin controllers
+  getAllWalletsAdmin,
   getAdminUserWallet,
+  getWalletByIdAdmin,
   getAllWalletTransactionsAdmin,
   adjustWalletBalance,
   updateWalletStatus,

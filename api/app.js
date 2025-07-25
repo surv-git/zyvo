@@ -391,11 +391,39 @@ const adminReviewReportRoutes = require('./routes/adminReviewReports.routes'); /
 
 // Favorites Management Routes
 const favoriteRoutes = require('./routes/favorite.routes'); // User favorites management routes
+const adminFavoriteRoutes = require('./routes/adminFavorite.routes'); // Admin favorites management routes
+
+// Admin Cart Management Routes
+const adminCartRoutes = require('./routes/adminCart.routes'); // Admin cart management routes
+const adminOrderRoutes = require('./routes/adminOrder.routes'); // Admin order management routes
 
 // Wallet Management Routes
 const userWalletRoutes = require('./routes/userWallet.routes'); // User wallet management routes
 const adminWalletRoutes = require('./routes/adminWallet.routes'); // Admin wallet management routes
 const walletCallbackRoutes = require('./routes/walletCallback.routes'); // Payment gateway callback routes
+
+// Dynamic Content Management Routes
+const adminDynamicContentRoutes = require('./routes/adminDynamicContent.routes'); // Admin dynamic content management routes
+const publicDynamicContentRoutes = require('./routes/publicDynamicContent.routes'); // Public dynamic content delivery routes
+
+// Address Management Routes
+const userAddressRoutes = require('./routes/userAddress.routes'); // User address management routes
+const adminAddressRoutes = require('./routes/adminAddress.routes'); // Admin address management routes
+
+// Payment Method Management Routes
+const adminPaymentMethodRoutes = require('./routes/adminPaymentMethod.routes'); // Admin payment method management routes
+
+// Notification Management Routes
+const userNotificationRoutes = require('./routes/userNotification.routes'); // User notification routes
+const adminNotificationRoutes = require('./routes/adminNotification.routes'); // Admin notification management routes
+
+// Email Management Routes
+const adminEmailRoutes = require('./routes/adminEmail.routes'); // Admin email management routes
+const adminEmailTemplateRoutes = require('./routes/adminEmailTemplate.routes'); // Admin email template management routes
+
+// Support Ticket Management Routes
+const userSupportTicketRoutes = require('./routes/userSupportTicket.routes.test'); // User support ticket routes
+const adminSupportTicketRoutes = require('./routes/adminSupportTicket.routes.test'); // Admin support ticket management routes
 
 // Use routes with v1 prefix
 app.use('/api/v1/products', productRoutes); // Product management routes
@@ -418,10 +446,20 @@ app.use('/api/v1/categories', categoryRoutes); // Category management routes
 app.use('/api/v1/admin/reviews', adminReviewRoutes); // Admin review management
 app.use('/api/v1/admin/reports', adminReviewReportRoutes); // Admin review report management
 app.use('/api/v1/admin/blog', adminBlogRoutes); // Admin blog management
+app.use('/api/v1/admin/favorites', adminFavoriteRoutes); // Admin favorites management
+app.use('/api/v1/admin/carts', adminCartRoutes); // Admin cart management
+app.use('/api/v1/admin/orders', adminOrderRoutes); // Admin order management routes
 app.use('/api/v1/admin/coupon-campaigns', couponCampaignRoutes); // Admin coupon campaign management
 app.use('/api/v1/admin/user-coupons', adminUserCouponRoutes); // Admin user coupon management
-app.use('/api/v1/admin/wallet', adminWalletRoutes); // Admin wallet management
-app.use('/api/v1/admin/orders', orderRoutes); // Admin order management routes
+app.use('/api/v1/admin/wallets', adminWalletRoutes); // Admin wallet management
+app.use('/api/v1/admin/addresses', adminAddressRoutes); // Admin address management
+app.use('/api/v1/admin/payment-methods', adminPaymentMethodRoutes); // Admin payment method management
+app.use('/api/v1/notifications', userNotificationRoutes); // User notification routes
+app.use('/api/v1/admin/notifications', adminNotificationRoutes); // Admin notification management
+app.use('/api/v1/admin/emails', adminEmailRoutes); // Admin email management
+app.use('/api/v1/admin/email-templates', adminEmailTemplateRoutes); // Admin email template management
+app.use('/api/v1/admin/support-tickets', adminSupportTicketRoutes); // Admin support ticket management
+app.use('/api/v1/admin/dynamic-content', adminDynamicContentRoutes); // Admin dynamic content management
 app.use('/api/v1/admin', userRoutes); // Admin routes are included in user routes (must be last)
 
 // Cart and Order Management Routes
@@ -433,12 +471,15 @@ app.use('/api/v1/user/coupons', userCouponRoutes); // User coupon management
 app.use('/api/v1/user/reviews', userReviewRoutes); // User review management
 app.use('/api/v1/user/favorites', favoriteRoutes); // User favorites management
 app.use('/api/v1/user/wallet', userWalletRoutes); // User wallet management
+app.use('/api/v1/user/addresses', userAddressRoutes); // User address management
 app.use('/api/v1/user/payment-methods', paymentMethodRoutes); // User payment method management
+app.use('/api/v1/user/support-tickets', userSupportTicketRoutes); // User support ticket management
 
 // Public routes
 app.use('/api/v1/products', publicReviewRoutes); // Public review reading (products/:id/reviews)
 app.use('/api/v1/favorites', favoriteRoutes); // Public favorites endpoints (popular)
 app.use('/api/v1/wallet', walletCallbackRoutes); // Payment gateway callbacks
+app.use('/api/v1/content', publicDynamicContentRoutes); // Public dynamic content delivery
 
 // Admin routes with comprehensive logging
 app.use('/api/v1/admin', adminRoutes);

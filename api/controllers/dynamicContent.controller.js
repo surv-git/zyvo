@@ -92,6 +92,20 @@ const createDynamicContent = async (req, res) => {
  */
 const getAllDynamicContentAdmin = async (req, res) => {
   try {
+    // Debug logging
+    console.log('GET /admin/dynamic-content - Query params:', req.query);
+    
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log('Validation errors:', errors.array());
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
     const {
       page = 1,
       limit = 20,

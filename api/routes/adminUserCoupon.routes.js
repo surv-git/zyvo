@@ -105,6 +105,15 @@ router.get('/',
 );
 
 /**
+ * Get Single User Coupon (Admin)
+ * GET /api/v1/admin/user-coupons/:id
+ */
+router.get('/:id',
+  param('id').isMongoId().withMessage('User coupon ID must be a valid ObjectId'),
+  userCouponController.getUserCouponById
+);
+
+/**
  * Update User Coupon (Admin)
  * PATCH /api/v1/admin/user-coupons/:id
  */

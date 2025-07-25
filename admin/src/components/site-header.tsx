@@ -1,8 +1,10 @@
 "use client"
 
-import { SidebarIcon, Bell, Settings, Mail } from "lucide-react"
+import { useState, useEffect } from "react"
+import { SidebarIcon, Bell, Settings, Mail, Activity, AlertCircle } from "lucide-react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
+import { API_CONFIG, API_ENDPOINTS, buildFullUrl } from "@/config/api"
 
 import { SearchForm } from "@/components/search-form"
 import {
@@ -77,10 +79,52 @@ function generateBreadcrumbs(pathname: string) {
   return breadcrumbs;
 }
 
+interface HealthStatus {
+  status: string
+  timestamp: string
+  uptime: number
+  environment: string
+}
+
 export function SiteHeader() {
   const { toggleSidebar } = useSidebar();
   const pathname = usePathname();
   const breadcrumbs = generateBreadcrumbs(pathname);
+  
+  // Health status state
+  const [healthStatus, setHealthStatus] = useState<HealthStatus | null>(null)
+  const [healthLoading, setHealthLoading] = useState(true)
+  
+  // Fetch health status
+  useEffect(() => {
+    const fetchHealthStatus = async () => {
+      try {
+        const healthUrl = buildFullUrl(API_ENDPOINTS.HEALTH.CHECK)
+        const response = await fetch(healthUrl, {
+          method: 'GET',
+          headers: API_CONFIG.DEFAULT_HEADERS,
+          signal: AbortSignal.timeout(API_CONFIG.TIMEOUT)
+        })
+        if (response.ok) {
+          const health = await response.json()
+          setHealthStatus(health)
+        } else {
+          setHealthStatus(null)
+        }
+      } catch (error) {
+        console.error('Failed to fetch health status:', error)
+        setHealthStatus(null)
+      } finally {
+        setHealthLoading(false)
+      }
+    }
+    
+    fetchHealthStatus()
+    // Refresh health status every 30 seconds
+    const interval = setInterval(fetchHealthStatus, 30000)
+    
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <header className="bg-background sticky top-0 z-50 flex w-full items-center border-b">
@@ -112,28 +156,47 @@ export function SiteHeader() {
             ))}
           </BreadcrumbList>
         </Breadcrumb>
-        <div className="flex-1 flex justify-center px-4">
-          <SearchForm className="w-full max-w-md" />
-        </div>
-        <div className="flex items-center">
-          <Button asChild variant="ghost" size="icon" className="h-8 w-8">
-            <Link href="/notifications">
-              <Bell className="h-4 w-4" />
-              <span className="sr-only">Notifications</span>
-            </Link>
-          </Button>
-          <Button asChild variant="ghost" size="icon" className="h-8 w-8">
-            <Link href="/notifications">
-              <Mail className="h-4 w-4" />
-              <span className="sr-only">Settings</span>
-            </Link>
-          </Button>
-          <Button asChild variant="ghost" size="icon" className="h-8 w-8">
-            <Link href="/notifications">
-              <Settings className="h-4 w-4" />
-              <span className="sr-only">Settings</span>
-            </Link>
-          </Button>
+        <div className="flex-1" />
+        <div className="flex items-center gap-4">
+          {/* Search Form */}
+          <SearchForm />
+          
+          {/* Health Status Indicator */}
+          <div className="flex items-center gap-2">
+            {healthLoading ? (
+              <div className="flex items-center gap-1">
+                <Activity className="h-3 w-3 animate-pulse text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Checking...</span>
+              </div>
+            ) : healthStatus?.status === 'OK' ? (
+              <div className="flex items-center gap-1" title={`Server healthy - Uptime: ${Math.floor(healthStatus.uptime / 60)}m - Environment: ${healthStatus.environment}`}>
+                <Activity className="h-3 w-3 text-green-600" />
+                <span className="text-xs text-green-600 font-medium">Online</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1" title="Server health check failed">
+                <AlertCircle className="h-3 w-3 text-red-600" />
+                <span className="text-xs text-red-600 font-medium">Offline</span>
+              </div>
+            )}
+          </div>
+          
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
+            <Button asChild variant="ghost" size="icon" className="h-8 w-8">
+              <Link href="/notifications">
+                <Bell className="h-4 w-4" />
+                <span className="sr-only">Notifications</span>
+              </Link>
+            </Button>
+            
+            <Button asChild variant="ghost" size="icon" className="h-8 w-8">
+              <Link href="/settings">
+                <Settings className="h-4 w-4" />
+                <span className="sr-only">Settings</span>
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
     </header>

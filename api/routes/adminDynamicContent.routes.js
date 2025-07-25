@@ -229,8 +229,8 @@ const validateGetAll = [
     
   query('is_active')
     .optional()
-    .isBoolean()
-    .withMessage('is_active must be a boolean'),
+    .isIn(['true', 'false'])
+    .withMessage('is_active must be true or false'),
     
   query('start_date')
     .optional()

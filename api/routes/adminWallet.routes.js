@@ -8,7 +8,9 @@ const router = express.Router();
 
 // Import controllers
 const {
+  getAllWalletsAdmin,
   getAdminUserWallet,
+  getWalletByIdAdmin,
   getAllWalletTransactionsAdmin,
   adjustWalletBalance,
   updateWalletStatus,
@@ -24,12 +26,21 @@ const {
   validateAdjustBalance,
   validateUpdateWalletStatus,
   validateUserId,
-  validateAdminTransactionQuery
+  validateAdminTransactionQuery,
+  validateGetAllWalletsAdmin,
+  validateWalletId
 } = require('../middleware/walletValidation');
 
 // Apply authentication middleware first, then admin check
 router.use(authMiddleware);
 router.use(adminAuthMiddleware);
+
+/**
+ * @route   GET /api/v1/admin/wallet
+ * @desc    Get all wallets with filtering and pagination
+ * @access  Admin only
+ */
+router.get('/', validateGetAllWalletsAdmin, getAllWalletsAdmin);
 
 /**
  * @route   GET /api/v1/admin/wallet/stats
@@ -39,31 +50,38 @@ router.use(adminAuthMiddleware);
 router.get('/stats', getWalletStatsAdmin);
 
 /**
- * @route   GET /api/v1/admin/wallet/transactions
+ * @route   GET /api/v1/admin/wallets/transactions
  * @desc    Get all wallet transactions (admin view)
  * @access  Admin only
  */
 router.get('/transactions', validateAdminTransactionQuery, getAllWalletTransactionsAdmin);
 
 /**
- * @route   GET /api/v1/admin/wallet/:userId
+ * @route   GET /api/v1/admin/wallets/user/:userId
  * @desc    Get specific user's wallet details
  * @access  Admin only
  */
-router.get('/:userId', validateUserId, getAdminUserWallet);
+router.get('/user/:userId', validateUserId, getAdminUserWallet);
 
 /**
- * @route   POST /api/v1/admin/wallet/:userId/adjust
+ * @route   GET /api/v1/admin/wallets/:walletId
+ * @desc    Get wallet details by wallet ID
+ * @access  Admin only
+ */
+router.get('/:walletId', validateWalletId, getWalletByIdAdmin);
+
+/**
+ * @route   POST /api/v1/admin/wallets/user/:userId/adjust
  * @desc    Adjust user's wallet balance (credit/debit)
  * @access  Admin only
  */
-router.post('/:userId/adjust', validateAdjustBalance, adjustWalletBalance);
+router.post('/user/:userId/adjust', validateAdjustBalance, adjustWalletBalance);
 
 /**
- * @route   PATCH /api/v1/admin/wallet/:userId/status
+ * @route   PATCH /api/v1/admin/wallets/user/:userId/status
  * @desc    Update user's wallet status (active/blocked/inactive)
  * @access  Admin only
  */
-router.patch('/:userId/status', validateUpdateWalletStatus, updateWalletStatus);
+router.patch('/user/:userId/status', validateUpdateWalletStatus, updateWalletStatus);
 
 module.exports = router;

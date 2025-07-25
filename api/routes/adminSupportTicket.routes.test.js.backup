@@ -1,0 +1,288 @@
+/**
+ * Admin Support Ticket Routes - Test Version
+ * Routes for admin-side support ticket management in admin dashboard
+ */
+
+const express = require('express');
+const router = express.Router();
+
+// Import middleware
+const { authMiddleware, authorize } = require('../middleware/auth.middleware');
+
+// Import controller
+const adminSupportTicketController = require('../controllers/adminSupportTicket.controller');
+
+/**
+ * @route GET /api/v1/admin/support-tickets
+ * @desc Get all support tickets with filters and pagination for admin
+ * @access Private (admin only)
+ */
+router.get(
+  '/',
+  authMiddleware,
+  (req, res, next) => {
+    // Inline authorization check
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin role required.'
+      });
+    }
+    next();
+  },
+  adminSupportTicketController.getAllSupportTickets
+);nst router = express.Router();
+
+// Import middleware
+const { authMiddleware, authorize } = require('../middleware/auth.middleware');
+
+// Import controller
+const adminSupportTicketController = require('../controllers/adminSupportTicket.controller');
+
+/**
+ * @route GET /api/v1/admin/support-tickets/debug-user
+ * @desc Debug endpoint to check user role and info
+ * @access Private (authenticated users)
+ */
+router.get(
+  '/debug-user',
+  authMiddleware,
+  (req, res) => {
+    res.json({
+      success: true,
+      user: {
+        id: req.user._id,
+        name: req.user.name,
+        email: req.user.email,
+        role: req.user.role,
+        isActive: req.user.isActive
+      }
+    });
+  }
+);
+
+/**
+ * @route GET /api/v1/admin/support-tickets/debug-auth
+ * @desc Debug endpoint to test authorization
+ * @access Private (admin only)
+ */
+router.get(
+  '/debug-auth',
+  authMiddleware,
+  (req, res, next) => {
+    console.log('Debug - req.user:', req.user);
+    console.log('Debug - req.user.role:', req.user.role);
+    console.log('Debug - typeof req.user.role:', typeof req.user.role);
+    console.log('Debug - role comparison:', req.user.role === 'admin');
+    console.log('Debug - roles array includes:', ['admin'].includes(req.user.role));
+    next();
+  },
+  authorize(['admin']),
+  (req, res) => {
+    res.json({
+      success: true,
+      message: 'Authorization successful!',
+      user: {
+        role: req.user.role,
+        name: req.user.name
+      }
+    });
+  }
+);
+
+/**
+ * @route GET /api/v1/admin/support-tickets/debug-bypass
+ * @desc Test endpoint bypassing authorization completely
+ * @access Private (authenticated users only)
+ */
+router.get(
+  '/debug-bypass',
+  authMiddleware,
+  (req, res) => {
+    res.json({
+      success: true,
+      message: 'Bypass test successful - this proves routes work!',
+      user: {
+        id: req.user._id,
+        role: req.user.role,
+        name: req.user.name
+      }
+    });
+  }
+);
+
+/**
+ * @route GET /api/v1/admin/support-tickets/test-minimal
+ * @desc Minimal test of actual admin functionality
+ * @access Private (authenticated users only - no role check for now)
+ */
+router.get(
+  '/test-minimal',
+  authMiddleware,
+  async (req, res) => {
+    try {
+      // Just return a simple success without calling the controller
+      res.json({
+        success: true,
+        message: 'Admin endpoint accessible!',
+        data: {
+          totalTickets: 0,
+          userRole: req.user.role,
+          timestamp: new Date().toISOString()
+        }
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Server error',
+        error: error.message
+      });
+    }
+  }
+);
+
+/**
+ * @route GET /api/v1/admin/support-tickets/analytics
+ * @desc Get support ticket analytics and insights
+ * @access Private (admin only)
+ */
+router.get(
+  '/analytics',
+  authMiddleware,
+  authorize(['admin']),
+  adminSupportTicketController.getSupportTicketAnalytics
+);
+
+/**
+ * @route GET /api/v1/admin/support-tickets/overdue
+ * @desc Get overdue support tickets
+ * @access Private (admin only)
+ */
+router.get(
+  '/overdue',
+  authMiddleware,
+  authorize(['admin']),
+  adminSupportTicketController.getOverdueTickets
+);
+
+/**
+ * @route POST /api/v1/admin/support-tickets/bulk-update
+ * @desc Bulk update multiple support tickets
+ * @access Private (admin only)
+ */
+router.post(
+  '/bulk-update',
+  authMiddleware,
+  authorize(['admin']),
+  adminSupportTicketController.bulkUpdateTickets
+);
+
+/**
+ * @route GET /api/v1/admin/support-tickets
+ * @desc Get all support tickets with advanced filtering, search, and pagination
+ * @access Private (admin only)
+ */
+router.get(
+  '/',
+  authMiddleware,
+  authorize(['admin']),
+  adminSupportTicketController.getAllSupportTickets
+);
+
+/**
+ * @route POST /api/v1/admin/support-tickets
+ * @desc Create a new support ticket (admin-created)
+ * @access Private (admin only)
+ */
+router.post(
+  '/',
+  authMiddleware,
+  authorize(['admin']),
+  adminSupportTicketController.createSupportTicket
+);
+
+/**
+ * @route GET /api/v1/admin/support-tickets/:id
+ * @desc Get a specific support ticket by ID (full admin view)
+ * @access Private (admin only)
+ */
+router.get(
+  '/:id',
+  authMiddleware,
+  authorize(['admin']),
+  adminSupportTicketController.getSupportTicketById
+);
+
+/**
+ * @route PATCH /api/v1/admin/support-tickets/:id
+ * @desc Update a support ticket
+ * @access Private (admin only)
+ */
+router.patch(
+  '/:id',
+  authMiddleware,
+  authorize(['admin']),
+  adminSupportTicketController.updateSupportTicket
+);
+
+/**
+ * @route DELETE /api/v1/admin/support-tickets/:id
+ * @desc Delete a support ticket (admin only, with confirmation)
+ * @access Private (admin only)
+ */
+router.delete(
+  '/:id',
+  authMiddleware,
+  authorize(['admin']),
+  adminSupportTicketController.deleteSupportTicket
+);
+
+/**
+ * @route POST /api/v1/admin/support-tickets/:id/messages
+ * @desc Add a message/reply to a support ticket
+ * @access Private (admin only)
+ */
+router.post(
+  '/:id/messages',
+  authMiddleware,
+  authorize(['admin']),
+  adminSupportTicketController.addMessageToTicket
+);
+
+/**
+ * @route POST /api/v1/admin/support-tickets/:id/assign
+ * @desc Assign a support ticket to an admin
+ * @access Private (admin only)
+ */
+router.post(
+  '/:id/assign',
+  authMiddleware,
+  authorize(['admin']),
+  adminSupportTicketController.assignSupportTicket
+);
+
+/**
+ * @route POST /api/v1/admin/support-tickets/:id/escalate
+ * @desc Escalate a support ticket
+ * @access Private (admin only)
+ */
+router.post(
+  '/:id/escalate',
+  authMiddleware,
+  authorize(['admin']),
+  adminSupportTicketController.escalateSupportTicket
+);
+
+/**
+ * @route POST /api/v1/admin/support-tickets/:id/internal-notes
+ * @desc Add internal note to a support ticket
+ * @access Private (admin only)
+ */
+router.post(
+  '/:id/internal-notes',
+  authMiddleware,
+  authorize(['admin']),
+  adminSupportTicketController.addInternalNote
+);
+
+module.exports = router;

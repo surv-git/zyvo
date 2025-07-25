@@ -124,11 +124,101 @@ const validatePopularQuery = [
     .withMessage('Limit must be between 1 and 50')
 ];
 
+/**
+ * Validation for admin favorites query
+ */
+const validateAdminFavoritesQuery = [
+  query('page')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Page must be a positive integer'),
+
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: 100 })
+    .withMessage('Limit must be between 1 and 100'),
+
+  query('sort_by')
+    .optional()
+    .isIn(['added_at', 'updated_at', 'user_id', 'product_variant_id'])
+    .withMessage('Sort by must be one of: added_at, updated_at, user_id, product_variant_id'),
+
+  query('sort_order')
+    .optional()
+    .isIn(['asc', 'desc'])
+    .withMessage('Sort order must be either asc or desc'),
+
+  query('user_id')
+    .optional()
+    .custom((value) => {
+      if (!mongoose.Types.ObjectId.isValid(value)) {
+        throw new Error('Invalid user ID format');
+      }
+      return true;
+    }),
+
+  query('product_variant_id')
+    .optional()
+    .custom((value) => {
+      if (!mongoose.Types.ObjectId.isValid(value)) {
+        throw new Error('Invalid product variant ID format');
+      }
+      return true;
+    }),
+
+  query('include_inactive')
+    .optional()
+    .isIn(['true', 'false'])
+    .withMessage('Include inactive must be true or false'),
+
+  query('date_from')
+    .optional()
+    .isISO8601()
+    .withMessage('Date from must be a valid ISO 8601 date'),
+
+  query('date_to')
+    .optional()
+    .isISO8601()
+    .withMessage('Date to must be a valid ISO 8601 date')
+];
+
+/**
+ * Validation for favorites stats query
+ */
+const validateFavoritesStatsQuery = [
+  query('date_from')
+    .optional()
+    .isISO8601()
+    .withMessage('Date from must be a valid ISO 8601 date'),
+
+  query('date_to')
+    .optional()
+    .isISO8601()
+    .withMessage('Date to must be a valid ISO 8601 date')
+];
+
+/**
+ * Validation for user ID parameter
+ */
+const validateUserIdParam = [
+  param('userId')
+    .custom((value) => {
+      if (!mongoose.Types.ObjectId.isValid(value)) {
+        throw new Error('Invalid user ID format');
+      }
+      return true;
+    })
+];
+
 module.exports = {
   validateAddFavorite,
   validateUpdateFavoriteNotes,
   validateProductVariantId,
   validateFavoritesQuery,
   validateBulkAddFavorites,
-  validatePopularQuery
+  validatePopularQuery,
+  // Admin validations
+  validateAdminFavoritesQuery,
+  validateFavoritesStatsQuery,
+  validateUserIdParam
 };

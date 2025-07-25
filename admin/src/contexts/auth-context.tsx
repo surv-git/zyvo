@@ -183,6 +183,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Handle token expiration - clear auth data and redirect to login
   const handleTokenExpiration = useCallback(() => {
+    console.log('🔐 Auth Context - handleTokenExpiration called');
+    console.log('🔐 Auth Context - Current auth state:', state.isAuthenticated);
+    
     // Clear all stored authentication data
     sessionStorage.removeItem('auth_token');
     sessionStorage.removeItem('refresh_token');
@@ -194,9 +197,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Update state
     dispatch({ type: 'LOGOUT' });
 
-    // Redirect to login
-    router.push('/login');
-  }, [router]);
+    // Redirect to login (temporarily disabled for debugging)
+    console.log('🔐 Auth Context - Not redirecting to login for debugging purposes');
+    // router.push('/login');
+  }, [state.isAuthenticated]);
 
   // Memoize context value to prevent infinite re-renders
   const contextValue: AuthContextType = useMemo(() => ({

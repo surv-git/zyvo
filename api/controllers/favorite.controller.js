@@ -459,6 +459,346 @@ const getMostFavorited = async (req, res, next) => {
   }
 };
 
+/**
+ * Admin: Get All Favorites Across System
+ * @route GET /api/v1/admin/favorites
+ * @access Admin only
+ */
+const getAllFavoritesAdmin = async (req, res, next) => {
+  try {
+    const {
+      page = 1,
+      limit = 20,
+      sort_by = 'added_at',
+      sort_order = 'desc',
+      user_id,
+      product_variant_id,
+      include_inactive = false,
+      date_from,
+      date_to
+    } = req.query;
+
+    // Validate pagination parameters
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit))); // Cap at 100
+
+    // Build filter object
+    const filter = {};
+    
+    if (!include_inactive || include_inactive === 'false') {
+      filter.is_active = true;
+    }
+
+    if (user_id && mongoose.Types.ObjectId.isValid(user_id)) {
+      filter.user_id = user_id;
+    }
+
+    if (product_variant_id && mongoose.Types.ObjectId.isValid(product_variant_id)) {
+      filter.product_variant_id = product_variant_id;
+    }
+
+    // Date range filter
+    if (date_from || date_to) {
+      filter.added_at = {};
+      if (date_from) {
+        filter.added_at.$gte = new Date(date_from);
+      }
+      if (date_to) {
+        filter.added_at.$lte = new Date(date_to);
+      }
+    }
+
+    // Build sort object
+    const sortOrder = sort_order === 'asc' ? 1 : -1;
+    const sortObj = { [sort_by]: sortOrder };
+
+    // Execute queries
+    const [favorites, totalCount] = await Promise.all([
+      Favorite.find(filter)
+        .populate({
+          path: 'user_id',
+          select: 'name email role isActive'
+        })
+        .populate({
+          path: 'product_variant_id',
+          select: 'sku_code price images name option_values is_active discount_details average_rating reviews_count',
+          populate: {
+            path: 'product_id',
+            select: 'name description category_id brand_id'
+          }
+        })
+        .sort(sortObj)
+        .skip((pageNum - 1) * limitNum)
+        .limit(limitNum)
+        .lean(),
+      Favorite.countDocuments(filter)
+    ]);
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(totalCount / limitNum);
+
+    res.json({
+      success: true,
+      data: favorites,
+      pagination: {
+        current_page: pageNum,
+        total_pages: totalPages,
+        total_items: totalCount,
+        items_per_page: limitNum,
+        has_next_page: pageNum < totalPages,
+        has_prev_page: pageNum > 1
+      },
+      filters: {
+        user_id: user_id || null,
+        product_variant_id: product_variant_id || null,
+        include_inactive,
+        date_from: date_from || null,
+        date_to: date_to || null
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching all favorites (admin):', error);
+    next(error);
+  }
+};
+
+/**
+ * Admin: Get Favorites Statistics
+ * @route GET /api/v1/admin/favorites/stats
+ * @access Admin only
+ */
+const getFavoritesStatsAdmin = async (req, res, next) => {
+  try {
+    const { date_from, date_to } = req.query;
+
+    // Build date filter
+    const dateFilter = {};
+    if (date_from || date_to) {
+      dateFilter.added_at = {};
+      if (date_from) {
+        dateFilter.added_at.$gte = new Date(date_from);
+      }
+      if (date_to) {
+        dateFilter.added_at.$lte = new Date(date_to);
+      }
+    }
+
+    // Get comprehensive statistics
+    const [
+      totalFavorites,
+      activeFavorites,
+      inactiveFavorites,
+      uniqueUsers,
+      uniqueProducts,
+      mostFavoritedProducts,
+      topUsers,
+      dailyStats
+    ] = await Promise.all([
+      // Total favorites count
+      Favorite.countDocuments(dateFilter),
+      
+      // Active favorites count
+      Favorite.countDocuments({ ...dateFilter, is_active: true }),
+      
+      // Inactive favorites count
+      Favorite.countDocuments({ ...dateFilter, is_active: false }),
+      
+      // Unique users with favorites
+      Favorite.distinct('user_id', { ...dateFilter, is_active: true }),
+      
+      // Unique products favorited
+      Favorite.distinct('product_variant_id', { ...dateFilter, is_active: true }),
+      
+      // Most favorited products (top 10)
+      Favorite.aggregate([
+        { $match: { ...dateFilter, is_active: true } },
+        { $group: { _id: '$product_variant_id', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 10 },
+        {
+          $lookup: {
+            from: 'productvariants',
+            localField: '_id',
+            foreignField: '_id',
+            as: 'product_variant'
+          }
+        },
+        { $unwind: '$product_variant' },
+        {
+          $lookup: {
+            from: 'products',
+            localField: 'product_variant.product_id',
+            foreignField: '_id',
+            as: 'product'
+          }
+        },
+        { $unwind: '$product' },
+        {
+          $project: {
+            count: 1,
+            product_variant_id: '$_id',
+            sku_code: '$product_variant.sku_code',
+            product_name: '$product.name',
+            price: '$product_variant.price'
+          }
+        }
+      ]),
+      
+      // Top users by favorites count (top 10)
+      Favorite.aggregate([
+        { $match: { ...dateFilter, is_active: true } },
+        { $group: { _id: '$user_id', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 10 },
+        {
+          $lookup: {
+            from: 'users',
+            localField: '_id',
+            foreignField: '_id',
+            as: 'user'
+          }
+        },
+        { $unwind: '$user' },
+        {
+          $project: {
+            count: 1,
+            user_id: '$_id',
+            user_name: '$user.name',
+            user_email: '$user.email'
+          }
+        }
+      ]),
+      
+      // Daily favorites stats for the last 30 days (or date range)
+      Favorite.aggregate([
+        {
+          $match: {
+            ...dateFilter,
+            added_at: {
+              $gte: date_from ? new Date(date_from) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+              ...(date_to && { $lte: new Date(date_to) })
+            }
+          }
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: { format: "%Y-%m-%d", date: "$added_at" }
+            },
+            total_added: { $sum: 1 },
+            active_added: {
+              $sum: { $cond: [{ $eq: ["$is_active", true] }, 1, 0] }
+            }
+          }
+        },
+        { $sort: { _id: 1 } }
+      ])
+    ]);
+
+    const stats = {
+      overview: {
+        total_favorites: totalFavorites,
+        active_favorites: activeFavorites,
+        inactive_favorites: inactiveFavorites,
+        unique_users_with_favorites: uniqueUsers.length,
+        unique_products_favorited: uniqueProducts.length,
+        average_favorites_per_user: uniqueUsers.length > 0 ? Math.round(activeFavorites / uniqueUsers.length * 100) / 100 : 0
+      },
+      most_favorited_products: mostFavoritedProducts,
+      top_users_by_favorites: topUsers,
+      daily_stats: dailyStats,
+      date_range: {
+        from: date_from || null,
+        to: date_to || null
+      }
+    };
+
+    res.json({
+      success: true,
+      data: stats
+    });
+
+  } catch (error) {
+    console.error('Error fetching favorites stats (admin):', error);
+    next(error);
+  }
+};
+
+/**
+ * Admin: Get User's Favorites
+ * @route GET /api/v1/admin/favorites/user/:userId
+ * @access Admin only
+ */
+const getUserFavoritesAdmin = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const {
+      page = 1,
+      limit = 20,
+      sort_by = 'added_at',
+      sort_order = 'desc',
+      include_inactive = false
+    } = req.query;
+
+    // Validate user ID
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid user ID format'
+      });
+    }
+
+    // Validate pagination parameters
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit))); // Cap at 100
+
+    // Get user's favorites
+    const [favorites, totalCount, user] = await Promise.all([
+      Favorite.findUserFavorites(userId, {
+        page: pageNum,
+        limit: limitNum,
+        sortBy: sort_by,
+        sortOrder: sort_order,
+        includeInactive: include_inactive === 'true'
+      }),
+      Favorite.countUserFavorites(userId, include_inactive === 'true'),
+      // Get user info
+      mongoose.model('User').findById(userId).select('name email role isActive createdAt')
+    ]);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(totalCount / limitNum);
+
+    res.json({
+      success: true,
+      data: {
+        user: user,
+        favorites: favorites,
+        pagination: {
+          current_page: pageNum,
+          total_pages: totalPages,
+          total_items: totalCount,
+          items_per_page: limitNum,
+          has_next_page: pageNum < totalPages,
+          has_prev_page: pageNum > 1
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching user favorites (admin):', error);
+    next(error);
+  }
+};
+
 module.exports = {
   addFavorite,
   getFavorites,
@@ -467,5 +807,9 @@ module.exports = {
   checkFavorite,
   getFavoriteStats,
   bulkAddFavorites,
-  getMostFavorited
+  getMostFavorited,
+  // Admin endpoints
+  getAllFavoritesAdmin,
+  getFavoritesStatsAdmin,
+  getUserFavoritesAdmin
 };

@@ -69,7 +69,7 @@ const createCouponCampaign = async (req, res, next) => {
 
     // Log admin activity
     await adminAuditLogger.log({
-      admin_id: req.admin.id,
+      admin_id: req.user._id || req.user.id,
       action: 'create_coupon_campaign',
       resource_type: 'CouponCampaign',
       resource_id: couponCampaign._id,
@@ -320,7 +320,7 @@ const updateCouponCampaign = async (req, res, next) => {
 
     // Log admin activity
     await adminAuditLogger.log({
-      admin_id: req.admin.id,
+      admin_id: req.user._id || req.user.id,
       action: 'update_coupon_campaign',
       resource_type: 'CouponCampaign',
       resource_id: campaign._id,
@@ -388,7 +388,7 @@ const deleteCouponCampaign = async (req, res, next) => {
 
     // Log admin activity
     await adminAuditLogger.log({
-      admin_id: req.admin.id,
+      admin_id: req.user._id || req.user.id,
       action: 'delete_coupon_campaign',
       resource_type: 'CouponCampaign',
       resource_id: campaign._id,
@@ -535,7 +535,7 @@ const generateUserCoupons = async (req, res, next) => {
 
     // Log admin activity
     await adminAuditLogger.log({
-      admin_id: req.admin.id,
+      admin_id: req.user._id || req.user.id,
       action: 'generate_user_coupons',
       resource_type: 'CouponCampaign',
       resource_id: campaign._id,

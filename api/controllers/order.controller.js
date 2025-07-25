@@ -218,16 +218,26 @@ const getMyOrders = async (req, res) => {
     const userId = req.user.id;
     const { status, page = 1, limit = 10, startDate, endDate } = req.query;
     
+    // Build query for filtering
+    const query = { user_id: userId };
+    if (status) query.order_status = status;
+    
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) query.createdAt.$lte = new Date(endDate);
+    }
+    
     const options = {
-      status: status,
       limit: parseInt(limit),
-      skip: (parseInt(page) - 1) * parseInt(limit),
-      startDate: startDate,
-      endDate: endDate
+      skip: (parseInt(page) - 1) * parseInt(limit)
     };
     
-    // Get orders
-    const orders = await Order.findUserOrders(userId, options);
+    // Get orders with the same query used for counting
+    const orders = await Order.find(query)
+      .sort({ createdAt: -1 })
+      .limit(options.limit)
+      .skip(options.skip);
     
     // Get order items for each order
     const ordersWithItems = [];
@@ -239,8 +249,8 @@ const getMyOrders = async (req, res) => {
       });
     }
     
-    // Get total count for pagination
-    const totalCount = await Order.countDocuments({ user_id: userId });
+    // Get total count for pagination - use the same query with filters
+    const totalCount = await Order.countDocuments(query);
     
     userAuditLogger.logActivity(userId, 'ORDERS_VIEWED', {
       page: page,
@@ -436,6 +446,11 @@ const getAllOrders = async (req, res) => {
       if (endDate) query.createdAt.$lte = new Date(endDate);
     }
     
+    // Debug logging
+    console.log('Admin Orders Debug:');
+    console.log('Query params:', req.query);
+    console.log('Built query:', JSON.stringify(query, null, 2));
+    
     const options = {
       limit: parseInt(limit),
       skip: (parseInt(page) - 1) * parseInt(limit)
@@ -461,10 +476,18 @@ const getAllOrders = async (req, res) => {
     // Get total count
     const totalCount = await Order.countDocuments(query);
     
-    adminAuditLogger.logActivity(req.user.id, 'ADMIN_ORDERS_VIEWED', {
-      filters: { user_id, order_status, payment_status, order_number },
-      page: page,
-      limit: limit
+    console.log('Total count from query:', totalCount);
+    console.log('Orders returned:', orders.length);
+    
+    adminAuditLogger.logAdminActivity({
+      admin_id: req.user.id,
+      action_type: 'ADMIN_ORDERS_VIEWED',
+      resource_type: 'orders',
+      details: {
+        filters: { user_id, order_status, payment_status, order_number },
+        page: page,
+        limit: limit
+      }
     });
     
     res.status(200).json({
@@ -515,10 +538,15 @@ const getAdminOrderDetail = async (req, res) => {
       { path: 'payment_method_id', select: 'method_type last_four' }
     ]);
     
-    adminAuditLogger.logActivity(req.user.id, 'ADMIN_ORDER_DETAIL_VIEWED', {
-      order_id: orderId,
-      order_number: orderData.order.order_number,
-      user_id: orderData.order.user_id
+    adminAuditLogger.logAdminActivity({
+      admin_id: req.user.id,
+      action_type: 'ADMIN_ORDER_DETAIL_VIEWED',
+      resource_type: 'order',
+      resource_id: orderId,
+      details: {
+        order_number: orderData.order.order_number,
+        user_id: orderData.order.user_id
+      }
     });
     
     res.status(200).json({
@@ -567,13 +595,18 @@ const updateOrderStatus = async (req, res) => {
       await order.save();
     }
     
-    adminAuditLogger.logActivity(req.user.id, 'ADMIN_ORDER_STATUS_UPDATED', {
-      order_id: orderId,
-      order_number: order.order_number,
-      old_status: oldStatus,
-      new_status: new_status,
-      tracking_number: tracking_number,
-      shipping_carrier: shipping_carrier
+    adminAuditLogger.logAdminActivity({
+      admin_id: req.user.id,
+      action_type: 'ADMIN_ORDER_STATUS_UPDATED',
+      resource_type: 'order',
+      resource_id: orderId,
+      details: {
+        order_number: order.order_number,
+        old_status: oldStatus,
+        new_status: new_status,
+        tracking_number: tracking_number,
+        shipping_carrier: shipping_carrier
+      }
     });
     
     // Get updated order data
@@ -640,11 +673,16 @@ const processRefund = async (req, res) => {
     // TODO: Integrate with actual payment gateway for refund processing
     // This would involve calling the payment gateway API to process the refund
     
-    adminAuditLogger.logActivity(req.user.id, 'ADMIN_ORDER_REFUND_PROCESSED', {
-      order_id: orderId,
-      order_number: order.order_number,
-      refund_amount: refundAmount,
-      reason: reason
+    adminAuditLogger.logAdminActivity({
+      admin_id: req.user.id,
+      action_type: 'ADMIN_ORDER_REFUND_PROCESSED',
+      resource_type: 'order',
+      resource_id: orderId,
+      details: {
+        order_number: order.order_number,
+        refund_amount: refundAmount,
+        reason: reason
+      }
     });
     
     res.status(200).json({
@@ -729,6 +767,183 @@ const getVariantPackDetails = async (variantId) => {
   }
 };
 
+/**
+ * Update order details (Admin)
+ * PUT /api/v1/admin/orders/:orderId
+ */
+const updateOrder = async (req, res) => {
+  try {
+    const orderId = req.params.orderId;
+    const {
+      shipping_address,
+      billing_address,
+      payment_method_id,
+      order_status,
+      payment_status,
+      shipping_cost,
+      tax_amount,
+      discount_amount,
+      tracking_number,
+      shipping_carrier,
+      notes
+    } = req.body;
+
+    console.log('Admin Order Update Debug:', {
+      orderId,
+      updateFields: Object.keys(req.body),
+      adminId: req.user?.id
+    });
+
+    // Validate order exists
+    const existingOrder = await Order.findById(orderId);
+    if (!existingOrder) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    // Build update object with only provided fields
+    const updateData = {};
+    
+    if (shipping_address) {
+      // Validate shipping address structure
+      const requiredAddressFields = ['full_name', 'address_line1', 'city', 'state', 'pincode', 'country', 'phone_number'];
+      for (const field of requiredAddressFields) {
+        if (!shipping_address[field]) {
+          return res.status(400).json({
+            success: false,
+            message: `Shipping address ${field} is required`
+          });
+        }
+      }
+      updateData.shipping_address = shipping_address;
+    }
+
+    if (billing_address) {
+      // Validate billing address structure
+      const requiredAddressFields = ['full_name', 'address_line1', 'city', 'state', 'pincode', 'country', 'phone_number'];
+      for (const field of requiredAddressFields) {
+        if (!billing_address[field]) {
+          return res.status(400).json({
+            success: false,
+            message: `Billing address ${field} is required`
+          });
+        }
+      }
+      updateData.billing_address = billing_address;
+    }
+
+    if (payment_method_id !== undefined) updateData.payment_method_id = payment_method_id;
+    
+    if (order_status) {
+      const validOrderStatuses = ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'RETURN_REQUESTED', 'RETURNED'];
+      if (!validOrderStatuses.includes(order_status)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid order status'
+        });
+      }
+      updateData.order_status = order_status;
+    }
+
+    if (payment_status) {
+      const validPaymentStatuses = ['PENDING', 'PAID', 'FAILED', 'REFUNDED', 'PARTIALLY_REFUNDED'];
+      if (!validPaymentStatuses.includes(payment_status)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid payment status'
+        });
+      }
+      updateData.payment_status = payment_status;
+    }
+
+    if (shipping_cost !== undefined) {
+      if (shipping_cost < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Shipping cost cannot be negative'
+        });
+      }
+      updateData.shipping_cost = shipping_cost;
+    }
+
+    if (tax_amount !== undefined) {
+      if (tax_amount < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Tax amount cannot be negative'
+        });
+      }
+      updateData.tax_amount = tax_amount;
+    }
+
+    if (discount_amount !== undefined) {
+      if (discount_amount < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Discount amount cannot be negative'
+        });
+      }
+      updateData.discount_amount = discount_amount;
+    }
+
+    if (tracking_number !== undefined) updateData.tracking_number = tracking_number;
+    if (shipping_carrier !== undefined) updateData.shipping_carrier = shipping_carrier;
+    if (notes !== undefined) updateData.notes = notes;
+
+    // Recalculate grand total if financial fields are updated
+    if (shipping_cost !== undefined || tax_amount !== undefined || discount_amount !== undefined) {
+      const currentOrder = await Order.findById(orderId);
+      const newShippingCost = shipping_cost !== undefined ? shipping_cost : currentOrder.shipping_cost;
+      const newTaxAmount = tax_amount !== undefined ? tax_amount : currentOrder.tax_amount;
+      const newDiscountAmount = discount_amount !== undefined ? discount_amount : currentOrder.discount_amount;
+      
+      updateData.grand_total_amount = currentOrder.subtotal_amount + newShippingCost + newTaxAmount - newDiscountAmount;
+    }
+
+    // Update timestamp
+    updateData.updatedAt = new Date();
+
+    // Update the order
+    const updatedOrder = await Order.findByIdAndUpdate(
+      orderId,
+      updateData,
+      { new: true, runValidators: true }
+    ).populate('user_id', 'email first_name last_name')
+     .populate('payment_method_id');
+
+    // Log admin activity
+    await adminAuditLogger.logAdminActivity(
+      req.user.id,
+      'ADMIN_ORDER_UPDATED',
+      'Order',
+      orderId,
+      {
+        updated_fields: Object.keys(updateData),
+        order_number: updatedOrder.order_number,
+        user_email: updatedOrder.user_id.email
+      }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Order updated successfully',
+      data: {
+        order: updatedOrder
+      }
+    });
+
+  } catch (error) {
+    console.error('Error updating order:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update order',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
 module.exports = {
   placeOrder,
   getMyOrders,
@@ -737,5 +952,6 @@ module.exports = {
   getAllOrders,
   getAdminOrderDetail,
   updateOrderStatus,
-  processRefund
+  processRefund,
+  updateOrder
 };

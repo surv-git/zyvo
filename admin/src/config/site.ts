@@ -15,6 +15,7 @@ export interface SiteConfig {
     logo: string;
     favicon: string;
     itemsPerPage: number;
+    itemsPerPageOptions: number[];
     enableNotifications: boolean;
     enableAnalytics: boolean;
     maintenanceMode: boolean;
@@ -70,6 +71,7 @@ export const defaultSiteConfig: SiteConfig = {
     logo: "/logo.svg",
     favicon: "/favicon.ico",
     itemsPerPage: 5,
+    itemsPerPageOptions: [5, 10, 20, 50, 100],
     enableNotifications: true,
     enableAnalytics: true,
     maintenanceMode: false,

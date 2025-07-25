@@ -543,15 +543,14 @@ export function SearchForm({ onNavigate, ...props }: SearchFormProps) {
           <Button
             type="button"
             variant="outline"
-            className="relative h-8 w-full justify-start px-3 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            className="h-8 w-48 justify-start px-3 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             onClick={() => setOpen(true)}
           >
             <Search className="mr-2 h-4 w-4" />
-            <span className="hidden lg:inline-flex">Search or jump to...</span>
-            <span className="inline-flex lg:hidden">Search...</span>
+            <span>Search...</span>
             <Badge 
               variant="secondary" 
-              className="ml-auto hidden sm:flex px-1.5 py-0.5 text-xs font-normal"
+              className="ml-auto px-1.5 py-0.5 text-xs font-normal"
             >
               <Command className="mr-1 h-3 w-3" />
               K

@@ -3,7 +3,7 @@
  * Express-validator rules for wallet operations
  */
 
-const { body, param, query } = require('express-validator');
+const { body, param, query, validationResult } = require('express-validator');
 const mongoose = require('mongoose');
 
 /**
@@ -279,6 +279,96 @@ const validateSummaryQuery = [
     .withMessage('Days must be between 1 and 365')
 ];
 
+/**
+ * Validation for admin get all wallets query parameters
+ */
+const validateGetAllWalletsAdmin = [
+  query('page')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Page must be a positive integer'),
+
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: 100 })
+    .withMessage('Limit must be between 1 and 100'),
+
+  query('sort_by')
+    .optional()
+    .isIn(['created_at', 'updated_at', 'balance', 'last_transaction_at'])
+    .withMessage('Invalid sort field'),
+
+  query('sort_order')
+    .optional()
+    .isIn(['asc', 'desc'])
+    .withMessage('Sort order must be asc or desc'),
+
+  query('status')
+    .optional()
+    .isIn(['ACTIVE', 'BLOCKED', 'INACTIVE'])
+    .withMessage('Status must be ACTIVE, BLOCKED, or INACTIVE'),
+
+  query('currency')
+    .optional()
+    .isIn(['INR', 'USD', 'EUR', 'GBP', 'AUD', 'CAD'])
+    .withMessage('Invalid currency'),
+
+  query('user_id')
+    .optional()
+    .custom((value) => {
+      if (!mongoose.Types.ObjectId.isValid(value)) {
+        throw new Error('Invalid user ID format');
+      }
+      return true;
+    }),
+
+  query('min_balance')
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage('Minimum balance must be non-negative'),
+
+  query('max_balance')
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage('Maximum balance must be non-negative'),
+
+  query('date_from')
+    .optional()
+    .isISO8601()
+    .withMessage('Date from must be a valid ISO 8601 date'),
+
+  query('date_to')
+    .optional()
+    .isISO8601()
+    .withMessage('Date to must be a valid ISO 8601 date'),
+
+  query('search')
+    .optional()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Search term must be between 1 and 100 characters')
+    .trim()
+];
+
+// Validate wallet ID parameter
+const validateWalletId = [
+  param('walletId')
+    .exists()
+    .withMessage('Wallet ID is required')
+    .isMongoId()
+    .withMessage('Invalid wallet ID format'),
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+    next();
+  }
+];
+
 module.exports = {
   validateInitiateTopup,
   validateAdjustBalance,
@@ -287,5 +377,7 @@ module.exports = {
   validateTransactionQuery,
   validateAdminTransactionQuery,
   validatePaymentCallback,
-  validateSummaryQuery
+  validateSummaryQuery,
+  validateGetAllWalletsAdmin,
+  validateWalletId
 };

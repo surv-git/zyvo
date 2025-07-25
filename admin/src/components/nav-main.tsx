@@ -24,7 +24,7 @@ export function NavMain({
 }: {
   items: {
     title: string
-    url: string
+    url?: string
     icon: LucideIcon
     isActive?: boolean
     onToggle?: (isOpen?: boolean) => void
@@ -50,12 +50,22 @@ export function NavMain({
             }}
           >
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={item.title}>
-                <a href={item.url}>
+              {item.url ? (
+                <SidebarMenuButton asChild tooltip={item.title}>
+                  <a href={item.url}>
+                    <item.icon />
+                    <span>{item.title}</span>
+                  </a>
+                </SidebarMenuButton>
+              ) : (
+                <SidebarMenuButton 
+                  tooltip={item.title}
+                  onClick={() => item.onToggle?.(!item.isActive)}
+                >
                   <item.icon />
                   <span>{item.title}</span>
-                </a>
-              </SidebarMenuButton>
+                </SidebarMenuButton>
+              )}
               {item.items?.length ? (
                 <>
                   <CollapsibleTrigger asChild>

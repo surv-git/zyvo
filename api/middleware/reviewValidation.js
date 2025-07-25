@@ -260,7 +260,28 @@ const validateReviewQuery = [
 
   query('status')
     .optional()
-    .isIn(['PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'FLAGGED'])
+    .custom((value) => {
+      const validStatuses = ['PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'FLAGGED'];
+      const statusMap = {
+        'pending': 'PENDING_APPROVAL',
+        'pending_approval': 'PENDING_APPROVAL', 
+        'approved': 'APPROVED',
+        'rejected': 'REJECTED',
+        'flagged': 'FLAGGED'
+      };
+      
+      // Check if it's already in the correct format
+      if (validStatuses.includes(value.toUpperCase())) {
+        return true;
+      }
+      
+      // Check if it can be mapped from lowercase
+      if (statusMap[value.toLowerCase()]) {
+        return true;
+      }
+      
+      throw new Error('Invalid status. Valid values: pending, approved, rejected, flagged');
+    })
     .withMessage('Invalid status'),
 
   query('min_rating')

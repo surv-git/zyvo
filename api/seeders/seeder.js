@@ -29,6 +29,14 @@ const Purchase = require('../models/Purchase');
 const Inventory = require('../models/Inventory');
 const Platform = require('../models/Platform');
 const Listing = require('../models/Listing');
+const CouponCampaign = require('../models/CouponCampaign');
+const UserCoupon = require('../models/UserCoupon');
+const DynamicContent = require('../models/DynamicContent');
+const BlogPost = require('../models/BlogPost');
+const Favorite = require('../models/Favorite');
+const Cart = require('../models/Cart');
+const CartItem = require('../models/CartItem');
+const SupportTicket = require('../models/SupportTicket');
 
 // Import individual seeders
 const userSeeder = require('./data/userSeeder');
@@ -39,96 +47,36 @@ const optionSeeder = require('./data/optionSeeder');
 const productVariantSeeder = require('./data/productVariantSeeder');
 const productReviewSeeder = require('./data/productReviewSeeder');
 const orderSeeder = require('./data/orderSeeder');
+const orderItemSeeder = require('./data/orderItemSeeder');
 const supplierSeeder = require('./data/supplierSeeder');
 const supplierContactNumberSeeder = require('./data/supplierContactNumberSeeder');
 const purchaseSeeder = require('./data/purchaseSeeder');
 const inventorySeeder = require('./data/inventorySeeder');
 const listingSeeder = require('./data/listingSeeder');
+const couponSeeder = require('./data/couponSeeder');
+const dynamicContentSeeder = require('./data/dynamicContentSeeder');
+const blogPostSeeder = require('./data/blogPostSeeder');
+const favoriteSeeder = require('./data/favoriteSeeder');
+const cartSeeder = require('./data/cartSeeder');
+const cartItemSeeder = require('./data/cartItemSeeder');
+const supportTicketSeeder = require('./data/supportTicketSeeder');
 
 /**
  * Seeder configuration
  * Defines available seeders and their dependencies
  */
-const SEEDERS = {
-  users: {
-    model: User,
-    seeder: userSeeder,
-    dependencies: [], // Users have no dependencies
-    description: 'User accounts and profiles'
-  },
-  categories: {
-    model: Category,
-    seeder: categorySeeder,
-    dependencies: [], // Categories have no dependencies
-    description: 'Product categories with hierarchical structure'
-  },
-  brands: {
-    model: Brand,
-    seeder: brandSeeder,
-    dependencies: [], // Brands have no dependencies
-    description: 'Product brands and manufacturers'
-  },
-  options: {
-    model: Option,
-    seeder: optionSeeder,
-    dependencies: [], // Options have no dependencies
-    description: 'Product option types and values (Color, Size, etc.)'
-  },
-  suppliers: {
-    model: Supplier,
-    seeder: supplierSeeder,
-    dependencies: [], // Suppliers have no dependencies
-    description: 'Supplier information and details'
-  },
-  supplierContactNumbers: {
-    model: SupplierContactNumber,
-    seeder: supplierContactNumberSeeder,
-    dependencies: ['suppliers'], // Contact numbers need suppliers
-    description: 'Supplier contact numbers and communication details'
-  },
-  products: {
-    model: Product,
-    seeder: productSeeder,
-    dependencies: ['categories'], // Products need categories
-    description: 'Product catalog'
-  },
-  productVariants: {
-    model: ProductVariant,
-    seeder: productVariantSeeder,
-    dependencies: ['products', 'options'], // Variants need products and options
-    description: 'Product variants (SKUs with specific option combinations)'
-  },
-  productReviews: {
-    model: ProductReview,
-    seeder: productReviewSeeder,
-    dependencies: ['users', 'productVariants'], // Reviews need users and product variants
-    description: 'Product reviews and ratings from customers'
-  },
-  purchases: {
-    model: Purchase,
-    seeder: purchaseSeeder,
-    dependencies: ['productVariants', 'suppliers'], // Purchases need product variants and suppliers
-    description: 'Purchase orders and inventory procurement records'
-  },
-  inventory: {
-    model: Inventory,
-    seeder: inventorySeeder,
-    dependencies: ['productVariants'], // Inventory needs product variants
-    description: 'Inventory stock levels and warehouse management data'
-  },
-  listings: {
-    model: Listing,
-    seeder: listingSeeder,
-    dependencies: ['productVariants'], // Listings need product variants and platforms
-    description: 'Product variant listings on different platforms'
-  },
-  orders: {
-    model: Order,
-    seeder: orderSeeder,
-    dependencies: ['users', 'products'], // Orders need both users and products
-    description: 'Order history and transactions'
-  }
-};
+const SEEDERS = [
+  userSeeder,
+  categorySeeder,
+  productSeeder,
+  orderSeeder,
+  orderItemSeeder,
+  dynamicContentSeeder,
+  blogPostSeeder,
+  favoriteSeeder,
+  cartSeeder,
+  cartItemSeeder
+];
 
 /**
  * Database connection

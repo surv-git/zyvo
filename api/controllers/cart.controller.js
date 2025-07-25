@@ -563,6 +563,386 @@ const getVariantPackDetails = async (variantId) => {
   }
 };
 
+/**
+ * Admin: Get All Carts Across System
+ * @route GET /api/v1/admin/carts
+ * @access Admin only
+ */
+const getAllCartsAdmin = async (req, res, next) => {
+  try {
+    const {
+      page = 1,
+      limit = 20,
+      sort_by = 'updated_at',
+      sort_order = 'desc',
+      user_id,
+      has_items,
+      has_coupon,
+      min_total,
+      max_total,
+      date_from,
+      date_to
+    } = req.query;
+
+    // Validate pagination parameters
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit))); // Cap at 100
+
+    // Build filter object
+    const filter = {};
+
+    if (user_id && mongoose.Types.ObjectId.isValid(user_id)) {
+      filter.user_id = user_id;
+    }
+
+    if (has_coupon === 'true') {
+      filter.applied_coupon_code = { $ne: null };
+    } else if (has_coupon === 'false') {
+      filter.applied_coupon_code = null;
+    }
+
+    // Total amount filters
+    if (min_total || max_total) {
+      filter.cart_total_amount = {};
+      if (min_total) {
+        filter.cart_total_amount.$gte = parseFloat(min_total);
+      }
+      if (max_total) {
+        filter.cart_total_amount.$lte = parseFloat(max_total);
+      }
+    }
+
+    // Date range filter
+    if (date_from || date_to) {
+      filter.updated_at = {};
+      if (date_from) {
+        filter.updated_at.$gte = new Date(date_from);
+      }
+      if (date_to) {
+        filter.updated_at.$lte = new Date(date_to);
+      }
+    }
+
+    // Build sort object
+    const sortOrder = sort_order === 'asc' ? 1 : -1;
+    const sortObj = { [sort_by]: sortOrder };
+
+    // Execute base queries
+    const [carts, totalCount] = await Promise.all([
+      Cart.find(filter)
+        .populate({
+          path: 'user_id',
+          select: 'name email role isActive'
+        })
+        .sort(sortObj)
+        .skip((pageNum - 1) * limitNum)
+        .limit(limitNum)
+        .lean(),
+      Cart.countDocuments(filter)
+    ]);
+
+    // Get cart items for each cart
+    const cartsWithItems = await Promise.all(
+      carts.map(async (cart) => {
+        const items = await CartItem.find({ cart_id: cart._id })
+          .populate({
+            path: 'product_variant_id',
+            select: 'sku_code price images is_active discount_details',
+            populate: {
+              path: 'product_id',
+              select: 'name description category_id brand_id'
+            }
+          })
+          .lean();
+
+        return {
+          ...cart,
+          items: items,
+          item_count: items.length,
+          has_items: items.length > 0
+        };
+      })
+    );
+
+    // Apply has_items filter if specified (after populating items)
+    let filteredCarts = cartsWithItems;
+    if (has_items === 'true') {
+      filteredCarts = cartsWithItems.filter(cart => cart.has_items);
+    } else if (has_items === 'false') {
+      filteredCarts = cartsWithItems.filter(cart => !cart.has_items);
+    }
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(totalCount / limitNum);
+
+    res.json({
+      success: true,
+      data: filteredCarts,
+      pagination: {
+        current_page: pageNum,
+        total_pages: totalPages,
+        total_items: totalCount,
+        items_per_page: limitNum,
+        has_next_page: pageNum < totalPages,
+        has_prev_page: pageNum > 1
+      },
+      filters: {
+        user_id: user_id || null,
+        has_items: has_items || null,
+        has_coupon: has_coupon || null,
+        min_total: min_total || null,
+        max_total: max_total || null,
+        date_from: date_from || null,
+        date_to: date_to || null
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching all carts (admin):', error);
+    next(error);
+  }
+};
+
+/**
+ * Admin: Get Cart Statistics
+ * @route GET /api/v1/admin/carts/stats
+ * @access Admin only
+ */
+const getCartsStatsAdmin = async (req, res, next) => {
+  try {
+    const { date_from, date_to } = req.query;
+
+    // Build date filter
+    const dateFilter = {};
+    if (date_from || date_to) {
+      dateFilter.updated_at = {};
+      if (date_from) {
+        dateFilter.updated_at.$gte = new Date(date_from);
+      }
+      if (date_to) {
+        dateFilter.updated_at.$lte = new Date(date_to);
+      }
+    }
+
+    // Get comprehensive statistics
+    const [
+      totalCarts,
+      activeCarts,
+      abandonedCarts,
+      cartsWithCoupons,
+      uniqueUsers,
+      totalCartValue,
+      cartsByDay,
+      topProductsInCarts
+    ] = await Promise.all([
+      // Total carts count
+      Cart.countDocuments(dateFilter),
+      
+      // Active carts (with items and total > 0)
+      Cart.countDocuments({ 
+        ...dateFilter, 
+        cart_total_amount: { $gt: 0 } 
+      }),
+      
+      // Abandoned carts (empty or total = 0)
+      Cart.countDocuments({ 
+        ...dateFilter, 
+        cart_total_amount: { $eq: 0 } 
+      }),
+      
+      // Carts with coupons applied
+      Cart.countDocuments({ 
+        ...dateFilter, 
+        applied_coupon_code: { $ne: null } 
+      }),
+      
+      // Unique users with carts
+      Cart.distinct('user_id', dateFilter),
+      
+      // Total value of all carts
+      Cart.aggregate([
+        { $match: dateFilter },
+        { $group: { _id: null, total: { $sum: '$cart_total_amount' } } }
+      ]),
+      
+      // Daily cart creation stats for the last 30 days (or date range)
+      Cart.aggregate([
+        {
+          $match: {
+            ...dateFilter,
+            created_at: {
+              $gte: date_from ? new Date(date_from) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+              ...(date_to && { $lte: new Date(date_to) })
+            }
+          }
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: { format: "%Y-%m-%d", date: "$created_at" }
+            },
+            carts_created: { $sum: 1 },
+            total_value: { $sum: '$cart_total_amount' }
+          }
+        },
+        { $sort: { _id: 1 } }
+      ]),
+      
+      // Most popular products in carts
+      CartItem.aggregate([
+        {
+          $lookup: {
+            from: 'carts',
+            localField: 'cart_id',
+            foreignField: '_id',
+            as: 'cart'
+          }
+        },
+        { $unwind: '$cart' },
+        { $match: { 'cart.updated_at': dateFilter.updated_at || { $exists: true } } },
+        {
+          $group: {
+            _id: '$product_variant_id',
+            total_quantity: { $sum: '$quantity' },
+            times_added: { $sum: 1 },
+            avg_quantity: { $avg: '$quantity' }
+          }
+        },
+        { $sort: { times_added: -1 } },
+        { $limit: 10 },
+        {
+          $lookup: {
+            from: 'productvariants',
+            localField: '_id',
+            foreignField: '_id',
+            as: 'product_variant'
+          }
+        },
+        { $unwind: '$product_variant' },
+        {
+          $lookup: {
+            from: 'products',
+            localField: 'product_variant.product_id',
+            foreignField: '_id',
+            as: 'product'
+          }
+        },
+        { $unwind: '$product' },
+        {
+          $project: {
+            product_variant_id: '$_id',
+            sku_code: '$product_variant.sku_code',
+            product_name: '$product.name',
+            price: '$product_variant.price',
+            total_quantity: 1,
+            times_added: 1,
+            avg_quantity: { $round: ['$avg_quantity', 2] }
+          }
+        }
+      ])
+    ]);
+
+    const stats = {
+      overview: {
+        total_carts: totalCarts,
+        active_carts: activeCarts,
+        abandoned_carts: abandonedCarts,
+        carts_with_coupons: cartsWithCoupons,
+        unique_users_with_carts: uniqueUsers.length,
+        total_cart_value: totalCartValue[0]?.total || 0,
+        average_cart_value: activeCarts > 0 ? Math.round((totalCartValue[0]?.total || 0) / activeCarts * 100) / 100 : 0,
+        abandonment_rate: totalCarts > 0 ? Math.round((abandonedCarts / totalCarts) * 100 * 100) / 100 : 0
+      },
+      daily_stats: cartsByDay,
+      most_popular_products: topProductsInCarts,
+      date_range: {
+        from: date_from || null,
+        to: date_to || null
+      }
+    };
+
+    res.json({
+      success: true,
+      data: stats
+    });
+
+  } catch (error) {
+    console.error('Error fetching cart stats (admin):', error);
+    next(error);
+  }
+};
+
+/**
+ * Admin: Get User's Cart Details
+ * @route GET /api/v1/admin/carts/user/:userId
+ * @access Admin only
+ */
+const getUserCartAdmin = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+
+    // Validate user ID
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid user ID format'
+      });
+    }
+
+    // Get user's cart with items
+    const [cart, user] = await Promise.all([
+      Cart.findOne({ user_id: userId })
+        .populate({
+          path: 'user_id',
+          select: 'name email role isActive createdAt'
+        })
+        .lean(),
+      mongoose.model('User').findById(userId).select('name email role isActive createdAt')
+    ]);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    let cartData = null;
+    if (cart) {
+      // Get cart items
+      const items = await CartItem.find({ cart_id: cart._id })
+        .populate({
+          path: 'product_variant_id',
+          select: 'sku_code price images is_active discount_details',
+          populate: {
+            path: 'product_id',
+            select: 'name description category_id brand_id'
+          }
+        })
+        .lean();
+
+      cartData = {
+        ...cart,
+        items: items,
+        item_count: items.length
+      };
+    }
+
+    res.json({
+      success: true,
+      data: {
+        user: user,
+        cart: cartData,
+        has_cart: !!cart
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching user cart (admin):', error);
+    next(error);
+  }
+};
+
 module.exports = {
   getCart,
   addItemToCart,
@@ -570,5 +950,9 @@ module.exports = {
   removeItemFromCart,
   applyCouponToCart,
   removeCouponFromCart,
-  clearCart
+  clearCart,
+  // Admin endpoints
+  getAllCartsAdmin,
+  getCartsStatsAdmin,
+  getUserCartAdmin
 };

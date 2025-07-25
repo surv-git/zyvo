@@ -692,8 +692,23 @@ const getAllReviewsAdmin = async (req, res, next) => {
       search
     } = req.query;
 
+    // Map status to correct format if needed
+    let mappedStatus = status;
+    if (status) {
+      const statusMap = {
+        'pending': 'PENDING_APPROVAL',
+        'pending_approval': 'PENDING_APPROVAL',
+        'approved': 'APPROVED',
+        'rejected': 'REJECTED',
+        'flagged': 'FLAGGED'
+      };
+      
+      // Use mapping if available, otherwise keep original (already validated)
+      mappedStatus = statusMap[status.toLowerCase()] || status.toUpperCase();
+    }
+
     const query = buildReviewSearchQuery({
-      status,
+      status: mappedStatus,
       product_variant_id,
       user_id,
       reported_only,

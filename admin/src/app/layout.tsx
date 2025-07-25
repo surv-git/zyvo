@@ -6,9 +6,7 @@ import "./styles/themes.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ActiveThemeProvider } from "@/components/active-theme";
 import { AuthProvider } from "@/contexts/auth-context";
-import { LayoutWrapper } from "@/components/layout-wrapper";
-import { AppSidebar } from "@/components/app-sidebar";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { ConditionalLayout } from "@/components/conditional-layout";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 import { defaultSiteConfig } from "@/config/site";
@@ -29,17 +27,12 @@ export const metadata: Metadata = {
   description: defaultSiteConfig.admin.description,
 };
 
-// Root layout wrapper that handles the sidebar positioning
+// Root layout wrapper that handles conditional layout (sidebar vs full screen)
 function RootLayoutContent({ children }: { children: React.ReactNode }) {
   return (
-    <div className="h-screen flex overflow-hidden theme-container">
-      <SidebarProvider>
-        <AppSidebar />
-        <LayoutWrapper>
-          {children}
-        </LayoutWrapper>
-      </SidebarProvider>
-    </div>
+    <ConditionalLayout>
+      {children}
+    </ConditionalLayout>
   )
 }
 

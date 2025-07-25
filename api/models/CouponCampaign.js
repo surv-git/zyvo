@@ -18,10 +18,16 @@ const couponCampaignSchema = new mongoose.Schema({
   
   slug: {
     type: String,
-    required: true,
     unique: true,
     lowercase: true,
-    trim: true
+    trim: true,
+    validate: {
+      validator: function(value) {
+        // Slug should always exist after pre-save hook
+        return value && value.length > 0;
+      },
+      message: 'Slug is required and cannot be empty'
+    }
   },
   
   description: {
@@ -133,7 +139,7 @@ const couponCampaignSchema = new mongoose.Schema({
   eligibility_criteria: [{
     type: String,
     enum: {
-      values: ['NEW_USER', 'REFERRAL', 'FIRST_ORDER', 'SPECIFIC_USER_GROUP', 'NONE'],
+      values: ['NEW_USER', 'REFERRAL', 'FIRST_ORDER', 'SPECIFIC_USER_GROUP', 'ALL_USERS', 'NONE'],
       message: 'Invalid eligibility criteria'
     }
   }],

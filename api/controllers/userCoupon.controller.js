@@ -322,6 +322,54 @@ const getAllUserCoupons = async (req, res, next) => {
 };
 
 /**
+ * Admin: Get single user coupon by ID
+ * GET /api/v1/admin/user-coupons/:id
+ */
+const getUserCouponById = async (req, res, next) => {
+  try {
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const { id } = req.params;
+
+    // Find the user coupon
+    const userCoupon = await UserCoupon.findById(id)
+      .populate({
+        path: 'coupon_campaign_id',
+        select: 'name slug discount_type discount_value min_order_value max_discount_amount usage_limit usage_count is_active starts_at expires_at'
+      })
+      .populate({
+        path: 'user_id',
+        select: 'name email phone isActive'
+      });
+
+    if (!userCoupon) {
+      return res.status(404).json({
+        success: false,
+        message: 'User coupon not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'User coupon retrieved successfully',
+      data: userCoupon
+    });
+
+  } catch (error) {
+    console.error('Error getting user coupon by ID:', error);
+    next(error);
+  }
+};
+
+/**
  * Admin: Update user coupon
  * PATCH /api/v1/admin/user-coupons/:id
  */
@@ -555,6 +603,7 @@ module.exports = {
   getCouponByCode,
   applyCoupon,
   getAllUserCoupons,
+  getUserCouponById,
   updateUserCoupon,
   deleteUserCoupon,
   validateCouponApplicability,

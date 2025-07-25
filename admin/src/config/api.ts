@@ -16,7 +16,7 @@ const getBaseUrl = (): string => {
       return 'https://api.zyvo.com';
     case 'development':
     default:
-      return 'http://localhost:3100';
+      return 'http://localhost:3100'; // Back to 3100 where the API server is running
   }
 };
 
@@ -134,6 +134,15 @@ export const API_ENDPOINTS = {
     CANCEL: (id: string) => `/orders/${id}/cancel`,
     STATUS: (id: string) => `/orders/${id}/status`,
     HISTORY: '/orders/history',
+    // Admin Order Management
+    ADMIN_LIST: '/admin/orders',
+    ADMIN_BY_ID: (id: string) => `/admin/orders/${id}`,
+    ADMIN_CREATE: '/admin/orders',
+    ADMIN_UPDATE: (id: string) => `/admin/orders/${id}`,
+    ADMIN_DELETE: (id: string) => `/admin/orders/${id}`,
+    ADMIN_CANCEL: (id: string) => `/admin/orders/${id}/cancel`,
+    ADMIN_UPDATE_STATUS: (id: string) => `/admin/orders/${id}/status`,
+    ADMIN_UPDATE_PAYMENT: (id: string) => `/admin/orders/${id}/payment-status`,
   },
   
   // Cart
@@ -144,17 +153,38 @@ export const API_ENDPOINTS = {
     UPDATE_ITEM: (id: string) => `/cart/items/${id}`,
     REMOVE_ITEM: (id: string) => `/cart/items/${id}`,
     CLEAR: '/cart/clear',
+    // Admin Cart Management
+    ADMIN_LIST: '/admin/carts',
+    ADMIN_BY_ID: (id: string) => `/admin/carts/${id}`,
+    ADMIN_CREATE: '/admin/carts',
+    ADMIN_UPDATE: (id: string) => `/admin/carts/${id}`,
+    ADMIN_DELETE: (id: string) => `/admin/carts/${id}`,
+    ADMIN_CLEAR: (id: string) => `/admin/carts/${id}/clear`,
   },
   
   // Reviews
   REVIEWS: {
     BASE: '/reviews',
     LIST: '/reviews',
-    BY_ID: (id: string) => `/reviews/${id}`,
+    BY_ID: (id: string) => `admin/reviews/${id}`,
     BY_PRODUCT: (productId: string) => `/products/${productId}/reviews`,
     CREATE: '/reviews',
     UPDATE: (id: string) => `/reviews/${id}`,
     DELETE: (id: string) => `/reviews/${id}`,
+    ADMIN_LIST: '/admin/reviews',
+    ADMIN_UPDATE_STATUS: (id: string) => `/admin/reviews/${id}/status`,
+  },
+  
+  // Coupons
+  COUPONS: {
+    BASE: '/coupons',
+    LIST: '/coupons',
+    BY_ID: (id: string) => `admin/user-coupons/${id}`,
+    CREATE: '/coupons',
+    UPDATE: (id: string) => `/coupons/${id}`,
+    DELETE: (id: string) => `/coupons/${id}`,
+    ADMIN_USER_COUPONS: '/admin/user-coupons',
+    ADMIN_DEACTIVATE: (id: string) => `/admin/user-coupons/${id}/deactivate`,
   },
   
   // Favorites/Wishlist
@@ -164,6 +194,14 @@ export const API_ENDPOINTS = {
     ADD: '/favorites',
     REMOVE: (id: string) => `/favorites/${id}`,
     CHECK: (productId: string) => `/favorites/check/${productId}`,
+    // Admin Favorites Management
+    ADMIN_LIST: '/admin/favorites',
+    ADMIN_BY_ID: (id: string) => `/admin/favorites/${id}`,
+    ADMIN_CREATE: '/admin/favorites',
+    ADMIN_UPDATE: (id: string) => `/admin/favorites/${id}`,
+    ADMIN_DELETE: (id: string) => `/admin/favorites/${id}`,
+    ADMIN_ACTIVATE: (id: string) => `/admin/favorites/${id}/activate`,
+    ADMIN_DEACTIVATE: (id: string) => `/admin/favorites/${id}/deactivate`,
   },
   
   // Inventory
@@ -267,6 +305,55 @@ export const API_ENDPOINTS = {
     STATUS: '/health/status',
     METRICS: '/health/metrics',
   },
+
+  // Email Services
+  EMAILS: {
+    BASE: '/admin/emails',
+    SEND: '/admin/emails',
+    SEND_BULK: '/admin/emails/bulk',
+    TEMPLATES: '/admin/emails/templates',
+    TEMPLATE_BY_ID: (id: string) => `/admin/emails/templates/${id}`,
+    QUEUE: '/admin/emails/queue',
+    QUEUE_STATUS: (id: string) => `/admin/emails/queue/${id}`,
+    HISTORY: '/admin/emails/history',
+  },
+
+  // Support Tickets
+  SUPPORT_TICKETS: {
+    BASE: '/admin/support-tickets',
+    LIST: '/admin/support-tickets',
+    BY_ID: (id: string) => `/admin/support-tickets/${id}`,
+    CREATE: '/admin/support-tickets',
+    UPDATE: (id: string) => `/admin/support-tickets/${id}`,
+    DELETE: (id: string) => `/admin/support-tickets/${id}`,
+    RESPOND: (id: string) => `/admin/support-tickets/${id}/respond`,
+    ASSIGN: (id: string) => `/admin/support-tickets/${id}/assign`,
+    ESCALATE: (id: string) => `/admin/support-tickets/${id}/escalate`,
+    CLOSE: (id: string) => `/admin/support-tickets/${id}/close`,
+    REOPEN: (id: string) => `/admin/support-tickets/${id}/reopen`,
+    DASHBOARD: '/admin/support-tickets/dashboard',
+    STATS: '/admin/support-tickets/stats',
+  },
+
+  // Dynamic Content
+  DYNAMIC_CONTENT: {
+    BASE: '/admin/dynamic-content',
+    LIST: '/admin/dynamic-content',
+    BY_ID: (id: string) => `/admin/dynamic-content/${id}`,
+    CREATE: '/admin/dynamic-content',
+    UPDATE: (id: string) => `/admin/dynamic-content/${id}`,
+    DELETE: (id: string) => `/admin/dynamic-content/${id}`,
+  },
+  BLOG: {
+    BASE: '/admin/blog',
+    LIST: '/admin/blog/posts',
+    BY_ID: (id: string) => `/admin/blog/posts/${id}`,
+    CREATE: '/admin/blog/posts',
+    UPDATE: (id: string) => `/admin/blog/posts/${id}`,
+    DELETE: (id: string) => `/admin/blog/posts/${id}`,
+    ARCHIVE: (id: string) => `/admin/blog/posts/${id}/archive`,
+    PUBLISH: (id: string) => `/admin/blog/posts/${id}/publish`,
+  },
 } as const;
 
 // Helper Functions
@@ -338,6 +425,9 @@ export const API_URLS = {
   
   // Health Check
   HEALTH: buildUrl(API_ENDPOINTS.HEALTH.CHECK),
+  
+  // Email Services
+  SEND_EMAIL: buildUrl(API_ENDPOINTS.EMAILS.SEND),
 } as const;
 
 // Type definitions for better TypeScript support
