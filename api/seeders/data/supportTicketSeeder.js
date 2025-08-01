@@ -273,8 +273,6 @@ const generateSupportTickets = async (userIds, adminIds, count = 30) => {
       priority: priority,
       status: status,
       source: getRandomElement(sources),
-      created_at: createdDate,
-      last_activity_at: createdDate,
       
       // Add assignment for some tickets (60% chance)
       ...(getRandomBool(0.6) && adminIds.length > 0 && {

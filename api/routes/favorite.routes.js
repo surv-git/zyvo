@@ -6,6 +6,16 @@
 const express = require('express');
 const router = express.Router();
 
+// DEBUG: Log all requests that reach this router
+router.use((req, res, next) => {
+  console.log('\n🔴 FAVORITE ROUTER DEBUG:');
+  console.log('Method:', req.method);
+  console.log('URL:', req.url);
+  console.log('Path:', req.path);
+  console.log('Request reached favorite router!');
+  next();
+});
+
 // Import controllers
 const {
   addFavorite,
@@ -26,6 +36,7 @@ const {
   validateAddFavorite,
   validateUpdateFavoriteNotes,
   validateProductVariantId,
+  validateGenericId,
   validateFavoritesQuery,
   validateBulkAddFavorites,
   validatePopularQuery
@@ -42,14 +53,33 @@ const {
 router.get('/popular', validatePopularQuery, getMostFavorited);
 
 // Apply user authentication to all other routes
+router.use((req, res, next) => {
+  console.log('🔵 About to apply authMiddleware...');
+  next();
+});
 router.use(authMiddleware);
+router.use((req, res, next) => {
+  console.log('🔵 AuthMiddleware passed, user:', req.user ? 'Present' : 'Missing');
+  next();
+});
 
 /**
  * @route   POST /api/v1/user/favorites
  * @desc    Add product variant to favorites
  * @access  User only
  */
-router.post('/', validateAddFavorite, addFavorite);
+router.post('/', 
+  (req, res, next) => {
+    console.log('🟡 POST route matched! About to validate...');
+    next();
+  },
+  validateAddFavorite, 
+  (req, res, next) => {
+    console.log('🟡 Validation passed! About to call controller...');
+    next();
+  },
+  addFavorite
+);
 
 /**
  * @route   GET /api/v1/user/favorites
@@ -87,10 +117,12 @@ router.get('/:productVariantId/check', validateProductVariantId, checkFavorite);
 router.patch('/:productVariantId/notes', validateUpdateFavoriteNotes, updateFavoriteNotes);
 
 /**
- * @route   DELETE /api/v1/user/favorites/:productVariantId
+ * @route   DELETE /api/v1/user/favorites/:id
  * @desc    Remove product variant from favorites (unfavorite)
  * @access  User only
+ * @param   {string} id - Either product_variant_id or product_id
+ * @query   {string} [type] - Optional: 'product' or 'variant' to specify ID type
  */
-router.delete('/:productVariantId', validateProductVariantId, removeFavorite);
+router.delete('/:id', validateGenericId, removeFavorite);
 
 module.exports = router;

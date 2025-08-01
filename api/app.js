@@ -73,7 +73,7 @@ app.use(helmet({
  * Configure Cross-Origin Resource Sharing with specific origin
  */
 const corsOptions = {
-  origin: CORS_ORIGIN,
+  origin: CORS_ORIGIN.split(',').map(origin => origin.trim()),
   credentials: true, // Allow cookies/authorization headers
   optionsSuccessStatus: 200, // Some legacy browsers choke on 204
   allowedHeaders: [
@@ -370,6 +370,8 @@ const categoryRoutes = require('./routes/category.routes'); // Category manageme
 const adminRoutes = require('./routes/admin.routes'); // Admin routes with audit logging
 const cartRoutes = require('./routes/cart.routes'); // Cart management routes
 const orderRoutes = require('./routes/order.routes'); // Order management routes
+const razorpayOrderRoutes = require('./routes/razorpayOrder.routes'); // Razorpay order routes
+const webhookRoutes = require('./routes/webhook.routes'); // Webhook routes
 
 // Coupon Management Routes (assuming they exist from previous implementation)
 const couponCampaignRoutes = require('./routes/couponCampaign.routes'); // Coupon campaign management routes
@@ -405,6 +407,9 @@ const walletCallbackRoutes = require('./routes/walletCallback.routes'); // Payme
 // Dynamic Content Management Routes
 const adminDynamicContentRoutes = require('./routes/adminDynamicContent.routes'); // Admin dynamic content management routes
 const publicDynamicContentRoutes = require('./routes/publicDynamicContent.routes'); // Public dynamic content delivery routes
+
+// Unsplash Integration Routes
+const unsplashRoutes = require('./routes/unsplash.routes'); // Unsplash image integration routes
 
 // Address Management Routes
 const userAddressRoutes = require('./routes/userAddress.routes'); // User address management routes
@@ -460,15 +465,36 @@ app.use('/api/v1/admin/emails', adminEmailRoutes); // Admin email management
 app.use('/api/v1/admin/email-templates', adminEmailTemplateRoutes); // Admin email template management
 app.use('/api/v1/admin/support-tickets', adminSupportTicketRoutes); // Admin support ticket management
 app.use('/api/v1/admin/dynamic-content', adminDynamicContentRoutes); // Admin dynamic content management
+app.use('/api/v1/unsplash', unsplashRoutes); // Unsplash image integration
 app.use('/api/v1/admin', userRoutes); // Admin routes are included in user routes (must be last)
 
 // Cart and Order Management Routes
 app.use('/api/v1/user/cart', cartRoutes); // Cart management routes
 app.use('/api/v1/user/orders', orderRoutes); // User order management routes
+app.use('/api/v1/user/orders/razorpay', razorpayOrderRoutes); // Razorpay payment integration routes
+app.use('/api/v1/webhooks', webhookRoutes); // Webhook routes
 
 // User specific routes
 app.use('/api/v1/user/coupons', userCouponRoutes); // User coupon management
 app.use('/api/v1/user/reviews', userReviewRoutes); // User review management
+
+// DEBUG: Log all requests to favorites endpoint
+app.use('/api/v1/user/favorites', (req, res, next) => {
+  console.log('\n🔍 FAVORITES DEBUG - Request received:');
+  console.log('Method:', req.method);
+  console.log('URL:', req.url);
+  console.log('Original URL:', req.originalUrl);
+  console.log('Headers:', {
+    auth: req.headers.authorization ? 'Present' : 'Missing',
+    contentType: req.headers['content-type'],
+    origin: req.headers.origin
+  });
+  console.log('Body:', req.body);
+  console.log('About to call next()...');
+  next();
+  console.log('After next() - this should not appear if route is found');
+});
+
 app.use('/api/v1/user/favorites', favoriteRoutes); // User favorites management
 app.use('/api/v1/user/wallet', userWalletRoutes); // User wallet management
 app.use('/api/v1/user/addresses', userAddressRoutes); // User address management
@@ -477,7 +503,7 @@ app.use('/api/v1/user/support-tickets', userSupportTicketRoutes); // User suppor
 
 // Public routes
 app.use('/api/v1/products', publicReviewRoutes); // Public review reading (products/:id/reviews)
-app.use('/api/v1/favorites', favoriteRoutes); // Public favorites endpoints (popular)
+// NOTE: favorites routes are handled by /api/v1/user/favorites mounting above
 app.use('/api/v1/wallet', walletCallbackRoutes); // Payment gateway callbacks
 app.use('/api/v1/content', publicDynamicContentRoutes); // Public dynamic content delivery
 
@@ -644,6 +670,17 @@ app.get('/api-docs', (req, res) => {
  * Handle routes that don't exist
  */
 app.use('*', (req, res) => {
+  console.log('\n⚠️ 404 HANDLER HIT:');
+  console.log('Method:', req.method);
+  console.log('Original URL:', req.originalUrl);
+  console.log('Path:', req.path);
+  console.log('Headers:', {
+    auth: req.headers.authorization ? 'Present' : 'Missing',
+    contentType: req.headers['content-type']
+  });
+  console.log('This means no route matched the request!');
+  console.log('---');
+  
   res.status(404).json({
     error: 'Route not found',
     message: `The requested route ${req.originalUrl} was not found on this server.`,

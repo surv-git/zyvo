@@ -15,23 +15,64 @@ const { validationResult } = require('express-validator');
  * @access User only
  */
 const addFavorite = async (req, res, next) => {
+  console.log('\n🔴 CONTROLLER DEBUG: addFavorite called!');
+  console.log('User:', req.user ? req.user.id : 'Missing');
+  console.log('Body:', req.body);
+  
   try {
+    console.log('Step 1: Checking validation errors...');
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Validation errors found:', errors.array());
       return res.status(400).json({
         success: false,
         message: 'Validation errors',
         errors: errors.array()
       });
     }
+    console.log('Step 2: Validation passed, extracting data...');
 
-    const { product_variant_id, user_notes } = req.body;
+    const { product_variant_id, product_id, user_notes } = req.body;
     const userId = req.user.id;
+    console.log('Step 3: Data extracted - userId:', userId, 'product_variant_id:', product_variant_id, 'product_id:', product_id);
 
+    let finalProductVariantId = product_variant_id;
+    
+    // If product_id is provided instead of product_variant_id, find the default variant
+    if (!product_variant_id && product_id) {
+      console.log('Step 4a: No product_variant_id provided, looking up default variant for product_id:', product_id);
+      const defaultVariant = await ProductVariant.findOne({ 
+        product_id: product_id, 
+        is_active: true 
+      }).sort({ createdAt: 1 }); // Get the first/oldest variant as default
+      
+      if (!defaultVariant) {
+        console.log('No active variants found for product_id:', product_id);
+        return res.status(404).json({
+          success: false,
+          message: 'No active variants found for this product'
+        });
+      }
+      
+      finalProductVariantId = defaultVariant._id;
+      console.log('Step 4b: Found default variant:', finalProductVariantId);
+    }
+    
+    if (!finalProductVariantId) {
+      console.log('Neither product_variant_id nor product_id provided');
+      return res.status(400).json({
+        success: false,
+        message: 'Either product_variant_id or product_id is required'
+      });
+    }
+
+    console.log('Step 5: Looking up ProductVariant with ID:', finalProductVariantId);
     // Verify product variant exists and is active
-    const productVariant = await ProductVariant.findById(product_variant_id);
+    const productVariant = await ProductVariant.findById(finalProductVariantId);
+    console.log('Step 6: ProductVariant lookup complete. Found:', !!productVariant);
     if (!productVariant) {
+      console.log('ProductVariant not found, returning 404');
       return res.status(404).json({
         success: false,
         message: 'Product variant not found'
@@ -45,8 +86,9 @@ const addFavorite = async (req, res, next) => {
       });
     }
 
+    console.log('Step 7: Adding/updating favorite with variant ID:', finalProductVariantId);
     // Add or update favorite using static method
-    const result = await Favorite.addOrUpdateFavorite(userId, product_variant_id, user_notes);
+    const result = await Favorite.addOrUpdateFavorite(userId, finalProductVariantId, user_notes);
     const { favorite, action } = result;
 
     // Populate the favorite for response
@@ -79,6 +121,7 @@ const addFavorite = async (req, res, next) => {
         break;
     }
 
+    console.log('Step 8: Logging user activity and sending response');
     // Log user activity
     userActivityLogger.info('Favorite added/updated', {
       user_id: userId,
@@ -87,7 +130,8 @@ const addFavorite = async (req, res, next) => {
       resource_type: 'Favorite',
       resource_id: favorite._id,
       details: {
-        product_variant_id,
+        product_variant_id: finalProductVariantId,
+        original_product_id: product_id, // Include original product_id if provided
         action,
         has_notes: !!user_notes
       }
@@ -103,7 +147,10 @@ const addFavorite = async (req, res, next) => {
     });
 
   } catch (error) {
+    console.log('\n🔴 CONTROLLER ERROR CAUGHT:');
     console.error('Error adding favorite:', error);
+    console.log('Error message:', error.message);
+    console.log('Error stack:', error.stack);
     next(error);
   }
 };
@@ -170,24 +217,50 @@ const getFavorites = async (req, res, next) => {
 
 /**
  * Remove Product Variant from Favorites (Unfavorite)
- * @route DELETE /api/v1/user/favorites/:productVariantId
+ * @route DELETE /api/v1/user/favorites/:id
  * @access User only
+ * @param {string} id - Either product_variant_id or product_id
+ * @query {string} [type] - Optional: 'product' or 'variant' to specify ID type
  */
 const removeFavorite = async (req, res, next) => {
+  console.log('\n🔴 REMOVE FAVORITE DEBUG:');
+  console.log('Params:', req.params);
+  console.log('Query:', req.query);
+  console.log('User:', req.user ? req.user.id : 'Missing');
+  
   try {
-    const { productVariantId } = req.params;
+    const { id } = req.params;
+    const { type } = req.query; // Optional: 'product' or 'variant'
     const userId = req.user.id;
 
-    // Validate product variant ID
-    if (!mongoose.Types.ObjectId.isValid(productVariantId)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid product variant ID format'
-      });
+    let finalProductVariantId = id;
+    
+    // If type is 'product' or we need to auto-detect, handle product_id
+    if (type === 'product' || (!type && id)) {
+      // First, try to find if this ID is a product_id
+      const ProductVariant = require('../models/ProductVariant');
+      const variantByProductId = await ProductVariant.findOne({ 
+        product_id: id, 
+        is_active: true 
+      }).sort({ createdAt: 1 });
+      
+      if (variantByProductId) {
+        console.log('Found variant by product_id:', variantByProductId._id);
+        finalProductVariantId = variantByProductId._id;
+      } else if (type === 'product') {
+        // If type was explicitly 'product' but no variants found
+        return res.status(404).json({
+          success: false,
+          message: 'No active variants found for this product'
+        });
+      }
+      // If no type specified and no variants found, assume it's a product_variant_id
     }
 
+    console.log('Final product_variant_id for removal:', finalProductVariantId);
+    
     // Remove favorite using static method
-    const removedFavorite = await Favorite.removeUserFavorite(userId, productVariantId);
+    const removedFavorite = await Favorite.removeUserFavorite(userId, finalProductVariantId);
 
     if (!removedFavorite) {
       return res.status(404).json({
@@ -196,6 +269,7 @@ const removeFavorite = async (req, res, next) => {
       });
     }
 
+    console.log('Favorite removed successfully, logging activity');
     // Log user activity
     userActivityLogger.info('Favorite removed', {
       user_id: userId,
@@ -204,7 +278,9 @@ const removeFavorite = async (req, res, next) => {
       resource_type: 'Favorite',
       resource_id: removedFavorite._id,
       details: {
-        product_variant_id: productVariantId
+        product_variant_id: finalProductVariantId,
+        original_id: id,
+        id_type: type || 'auto-detected'
       }
     });
 

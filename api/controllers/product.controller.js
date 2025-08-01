@@ -9,6 +9,236 @@ const Product = require('../models/Product');
 const userActivityLogger = require('../loggers/userActivity.logger');
 const adminAuditLogger = require('../loggers/adminAudit.logger');
 const { validationResult } = require('express-validator');
+const unsplashService = require('../services/unsplash.service');
+
+/**
+ * Helper function to create aggregation pipeline for products with variants
+ * @param {Object} matchQuery - Initial match query for products
+ * @param {Object} sortObj - Sort object for results
+ * @param {number} limitNum - Limit for results (optional)
+ * @returns {Array} Aggregation pipeline
+ */
+const createProductsWithVariantsPipeline = (matchQuery, sortObj, limitNum = null) => {
+  const pipeline = [
+    // Stage 1: Initial match to filter products
+    {
+      $match: matchQuery
+    },
+
+    // Stage 2: Lookup product variants
+    {
+      $lookup: {
+        from: 'productvariants',
+        localField: '_id',
+        foreignField: 'product_id',
+        as: 'product_variants'
+      }
+    },
+
+    // Stage 3: Unwind product variants (preserve products with no variants)
+    {
+      $unwind: {
+        path: '$product_variants',
+        preserveNullAndEmptyArrays: true
+      }
+    },
+
+    // Stage 4: Match only active variants
+    {
+      $match: {
+        $or: [
+          { 'product_variants.is_active': true },
+          { 'product_variants': null }
+        ]
+      }
+    },
+
+    // Stage 5: Add calculated discount price field
+    {
+      $addFields: {
+        'product_variants.calculated_discount_price': {
+          $cond: {
+            if: {
+              $and: [
+                { $ne: ['$product_variants', null] },
+                { $eq: ['$product_variants.discount_details.is_on_sale', true] },
+                { $ne: ['$product_variants.discount_details.price', null] }
+              ]
+            },
+            then: '$product_variants.discount_details.price',
+            else: null
+          }
+        }
+      }
+    },
+
+    // Stage 6: Group back by product
+    {
+      $group: {
+        _id: '$_id',
+        // Reconstruct product fields
+        name: { $first: '$name' },
+        slug: { $first: '$slug' },
+        description: { $first: '$description' },
+        short_description: { $first: '$short_description' },
+        category_id: { $first: '$category_id' },
+        brand_id: { $first: '$brand_id' },
+        images: { $first: '$images' },
+        score: { $first: '$score' },
+        seo_details: { $first: '$seo_details' },
+        is_active: { $first: '$is_active' },
+        createdAt: { $first: '$createdAt' },
+        updatedAt: { $first: '$updatedAt' },
+        average_rating: { $first: '$average_rating' },
+        reviews_count: { $first: '$reviews_count' },
+        
+        // Calculate minimum prices
+        min_price: { 
+          $min: {
+            $cond: {
+              if: { $ne: ['$product_variants', null] },
+              then: '$product_variants.price',
+              else: null
+            }
+          }
+        },
+        min_discounted_price: { 
+          $min: '$product_variants.calculated_discount_price'
+        },
+        
+        // Collect variants
+        variants: {
+          $push: {
+            $cond: {
+              if: { $ne: ['$product_variants', null] },
+              then: {
+                _id: '$product_variants._id',
+                sku_code: '$product_variants.sku_code',
+                slug: '$product_variants.slug',
+                price: '$product_variants.price',
+                discount_details: '$product_variants.discount_details',
+                calculated_discount_price: '$product_variants.calculated_discount_price',
+                stock_quantity: '$product_variants.stock_quantity',
+                low_stock_threshold: '$product_variants.low_stock_threshold',
+                weight: '$product_variants.weight',
+                dimensions: '$product_variants.dimensions',
+                images: '$product_variants.images',
+                option_values: '$product_variants.option_values',
+                is_active: '$product_variants.is_active',
+                createdAt: '$product_variants.createdAt',
+                updatedAt: '$product_variants.updatedAt'
+              },
+              else: '$$REMOVE'
+            }
+          }
+        }
+      }
+    },
+
+    // Stage 7: Clean up fields
+    {
+      $addFields: {
+        min_discounted_price: {
+          $cond: {
+            if: { 
+              $or: [
+                { $eq: ['$min_discounted_price', null] },
+                { $eq: [{ $type: '$min_discounted_price' }, 'missing'] }
+              ]
+            },
+            then: null,
+            else: '$min_discounted_price'
+          }
+        },
+        variants: {
+          $cond: {
+            if: { $eq: [{ $size: '$variants' }, 0] },
+            then: [],
+            else: '$variants'
+          }
+        }
+      }
+    },
+
+    // Stage 8: Lookup category details
+    {
+      $lookup: {
+        from: 'categories',
+        localField: 'category_id',
+        foreignField: '_id',
+        as: 'category_id'
+      }
+    },
+
+    // Stage 9: Unwind category
+    {
+      $unwind: {
+        path: '$category_id',
+        preserveNullAndEmptyArrays: true
+      }
+    },
+
+    // Stage 10: Project category fields
+    {
+      $addFields: {
+        'category_id': {
+          _id: '$category_id._id',
+          name: '$category_id.name',
+          slug: '$category_id.slug'
+        }
+      }
+    },
+
+    // Stage 11: Lookup brand details
+    {
+      $lookup: {
+        from: 'brands',
+        localField: 'brand_id',
+        foreignField: '_id',
+        as: 'brand_id'
+      }
+    },
+
+    // Stage 12: Unwind brand
+    {
+      $unwind: {
+        path: '$brand_id',
+        preserveNullAndEmptyArrays: true
+      }
+    },
+
+    // Stage 13: Project brand fields
+    {
+      $addFields: {
+        'brand_id': {
+          $cond: {
+            if: { $eq: ['$brand_id', null] },
+            then: null,
+            else: {
+              _id: '$brand_id._id',
+              name: '$brand_id.name',
+              slug: '$brand_id.slug',
+              logo_url: '$brand_id.logo_url',
+              website: '$brand_id.website'
+            }
+          }
+        }
+      }
+    },
+
+    // Stage 14: Sort
+    {
+      $sort: sortObj
+    }
+  ];
+
+  // Add limit if specified
+  if (limitNum) {
+    pipeline.push({ $limit: limitNum });
+  }
+
+  return pipeline;
+};
 
 /**
  * Create a new product
@@ -38,13 +268,35 @@ const createProduct = async (req, res, next) => {
       seo_details
     } = req.body;
 
+    // Auto-fetch images from Unsplash if none provided
+    let productImages = images || [];
+    
+    if ((!images || images.length === 0) && unsplashService.isReady()) {
+      try {
+        // Get category name for better image search
+        const Category = require('../models/Category');
+        const category = await Category.findById(category_id);
+        const categoryName = category?.name || '';
+        
+        // Fetch images from Unsplash
+        const unsplashImages = await unsplashService.getProductImages(name, categoryName, 3);
+        if (unsplashImages.length > 0) {
+          productImages = unsplashImages;
+          console.log(`✅ Auto-fetched ${unsplashImages.length} images for product: ${name}`);
+        }
+      } catch (error) {
+        console.warn('⚠️  Failed to fetch Unsplash images for product:', error.message);
+        // Continue with empty images array - don't fail product creation
+      }
+    }
+
     // Create new product
     const product = new Product({
       name,
       description,
       short_description,
       category_id,
-      images: images || [],
+      images: productImages,
       brand_id,
       score: score || 0,
       seo_details: seo_details || {}
@@ -53,7 +305,10 @@ const createProduct = async (req, res, next) => {
     const savedProduct = await product.save();
     
     // Populate referenced fields for response
-    await savedProduct.populate('category_id');
+    await savedProduct.populate([
+      { path: 'category_id', select: 'name slug description' },
+      { path: 'brand_id', select: 'name slug description logo_url website' }
+    ]);
 
     // Log admin action
     adminAuditLogger.info('Product created', {
@@ -106,6 +361,17 @@ const createProduct = async (req, res, next) => {
  */
 const getAllProducts = async (req, res, next) => {
   try {
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log('⚠️ Products API Validation Errors:', errors.array());
+      return res.status(400).json({
+        success: false,
+        message: 'Validation errors',
+        errors: errors.array()
+      });
+    }
+
     const {
       page = 1,
       limit = 10,
@@ -118,10 +384,12 @@ const getAllProducts = async (req, res, next) => {
       include_inactive = false
     } = req.query;
 
-    // Parse pagination
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
+    // Parse pagination with validation
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
     const skip = (pageNum - 1) * limitNum;
+
+
 
     // Build initial match query for products
     const matchQuery = {};
@@ -137,14 +405,38 @@ const getAllProducts = async (req, res, next) => {
       matchQuery.is_active = true;
     }
 
-    // Category filter
+    // Category filter - supports multiple values
     if (category_id) {
-      matchQuery.category_id = new mongoose.Types.ObjectId(category_id);
+      const categoryIds = Array.isArray(category_id) 
+        ? category_id 
+        : category_id.split(',');
+      
+      if (categoryIds.length === 1) {
+        // Single category - direct match
+        matchQuery.category_id = new mongoose.Types.ObjectId(categoryIds[0].trim());
+      } else {
+        // Multiple categories - use $in operator
+        matchQuery.category_id = {
+          $in: categoryIds.map(id => new mongoose.Types.ObjectId(id.trim()))
+        };
+      }
     }
 
-    // Brand filter
+    // Brand filter - supports multiple values
     if (brand_id) {
-      matchQuery.brand_id = new mongoose.Types.ObjectId(brand_id);
+      const brandIds = Array.isArray(brand_id)
+        ? brand_id
+        : brand_id.split(',');
+        
+      if (brandIds.length === 1) {
+        // Single brand - direct match
+        matchQuery.brand_id = new mongoose.Types.ObjectId(brandIds[0].trim());
+      } else {
+        // Multiple brands - use $in operator
+        matchQuery.brand_id = {
+          $in: brandIds.map(id => new mongoose.Types.ObjectId(id.trim()))
+        };
+      }
     }
 
     // Search functionality
@@ -214,7 +506,7 @@ const getAllProducts = async (req, res, next) => {
         }
       },
 
-      // Stage 6: Group back by product to calculate min prices
+      // Stage 6: Group back by product to calculate min prices and collect variants
       {
         $group: {
           _id: '$_id',
@@ -244,11 +536,38 @@ const getAllProducts = async (req, res, next) => {
           },
           min_discounted_price: { 
             $min: '$product_variants.calculated_discount_price'
+          },
+          
+          // Collect all active variants
+          variants: {
+            $push: {
+              $cond: {
+                if: { $ne: ['$product_variants', null] },
+                then: {
+                  _id: '$product_variants._id',
+                  sku_code: '$product_variants.sku_code',
+                  slug: '$product_variants.slug',
+                  price: '$product_variants.price',
+                  discount_details: '$product_variants.discount_details',
+                  calculated_discount_price: '$product_variants.calculated_discount_price',
+                  stock_quantity: '$product_variants.stock_quantity',
+                  low_stock_threshold: '$product_variants.low_stock_threshold',
+                  weight: '$product_variants.weight',
+                  dimensions: '$product_variants.dimensions',
+                  images: '$product_variants.images',
+                  option_values: '$product_variants.option_values',
+                  is_active: '$product_variants.is_active',
+                  createdAt: '$product_variants.createdAt',
+                  updatedAt: '$product_variants.updatedAt'
+                },
+                else: '$$REMOVE'
+              }
+            }
           }
         }
       },
 
-      // Stage 7: Clean up null/undefined min_discounted_price values
+      // Stage 7: Clean up null/undefined min_discounted_price values and empty variants arrays
       {
         $addFields: {
           min_discounted_price: {
@@ -261,6 +580,13 @@ const getAllProducts = async (req, res, next) => {
               },
               then: null,
               else: '$min_discounted_price'
+            }
+          },
+          variants: {
+            $cond: {
+              if: { $eq: [{ $size: '$variants' }, 0] },
+              then: [],
+              else: '$variants'
             }
           }
         }
@@ -295,7 +621,44 @@ const getAllProducts = async (req, res, next) => {
         }
       },
 
-      // Stage 11: Sort the results
+      // Stage 11: Lookup brand details for populated response
+      {
+        $lookup: {
+          from: 'brands',
+          localField: 'brand_id',
+          foreignField: '_id',
+          as: 'brand_id'
+        }
+      },
+
+      // Stage 12: Unwind brand (may not exist for all products)
+      {
+        $unwind: {
+          path: '$brand_id',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+
+      // Stage 13: Project only needed brand fields
+      {
+        $addFields: {
+          'brand_id': {
+            $cond: {
+              if: { $eq: ['$brand_id', null] },
+              then: null,
+              else: {
+                _id: '$brand_id._id',
+                name: '$brand_id.name',
+                slug: '$brand_id.slug',
+                logo_url: '$brand_id.logo_url',
+                website: '$brand_id.website'
+              }
+            }
+          }
+        }
+      },
+
+      // Stage 14: Sort the results
       {
         $sort: sortObj
       }
@@ -325,6 +688,8 @@ const getAllProducts = async (req, res, next) => {
     const products = result.paginatedResults || [];
     const totalItems = result.totalCount[0]?.count || 0;
     const totalPages = Math.ceil(totalItems / limitNum);
+
+
 
     // Log user activity for public access
     if (!req.user || req.user.role !== 'admin') {
@@ -371,22 +736,229 @@ const getProductByIdOrSlug = async (req, res, next) => {
     const { identifier } = req.params;
     
     // Build query - try to find by ID first, then by slug
-    let query;
+    let matchQuery;
     if (identifier.match(/^[0-9a-fA-F]{24}$/)) {
       // Valid ObjectId format
-      query = { _id: identifier };
+      matchQuery = { _id: new mongoose.Types.ObjectId(identifier) };
     } else {
       // Assume it's a slug
-      query = { slug: identifier };
+      matchQuery = { slug: identifier };
     }
 
     // Only show active products to non-admin users
     if (!req.user || req.user.role !== 'admin') {
-      query.is_active = true;
+      matchQuery.is_active = true;
     }
 
-    const product = await Product.findOne(query)
-      .populate('category_id', 'name slug description');
+    // MongoDB Aggregation Pipeline to get product with variants
+    const aggregationPipeline = [
+      // Stage 1: Match the specific product
+      {
+        $match: matchQuery
+      },
+
+      // Stage 2: Lookup product variants from the productvariants collection
+      {
+        $lookup: {
+          from: 'productvariants',
+          localField: '_id',
+          foreignField: 'product_id',
+          as: 'product_variants'
+        }
+      },
+
+      // Stage 3: Unwind product variants array (preserve products with no variants)
+      {
+        $unwind: {
+          path: '$product_variants',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+
+      // Stage 4: Match only active variants (and handle null variants)
+      {
+        $match: {
+          $or: [
+            { 'product_variants.is_active': true },
+            { 'product_variants': null }
+          ]
+        }
+      },
+
+      // Stage 5: Add calculated discount price field for variants
+      {
+        $addFields: {
+          'product_variants.calculated_discount_price': {
+            $cond: {
+              if: {
+                $and: [
+                  { $ne: ['$product_variants', null] },
+                  { $eq: ['$product_variants.discount_details.is_on_sale', true] },
+                  { $ne: ['$product_variants.discount_details.price', null] }
+                ]
+              },
+              then: '$product_variants.discount_details.price',
+              else: null
+            }
+          }
+        }
+      },
+
+      // Stage 6: Group back by product to calculate min prices and collect variants
+      {
+        $group: {
+          _id: '$_id',
+          // Reconstruct product fields using $first
+          name: { $first: '$name' },
+          slug: { $first: '$slug' },
+          description: { $first: '$description' },
+          short_description: { $first: '$short_description' },
+          category_id: { $first: '$category_id' },
+          brand_id: { $first: '$brand_id' },
+          images: { $first: '$images' },
+          score: { $first: '$score' },
+          seo_details: { $first: '$seo_details' },
+          is_active: { $first: '$is_active' },
+          createdAt: { $first: '$createdAt' },
+          updatedAt: { $first: '$updatedAt' },
+          
+          // Calculate minimum prices from variants
+          min_price: { 
+            $min: {
+              $cond: {
+                if: { $ne: ['$product_variants', null] },
+                then: '$product_variants.price',
+                else: null
+              }
+            }
+          },
+          min_discounted_price: { 
+            $min: '$product_variants.calculated_discount_price'
+          },
+          
+          // Collect all active variants
+          variants: {
+            $push: {
+              $cond: {
+                if: { $ne: ['$product_variants', null] },
+                then: {
+                  _id: '$product_variants._id',
+                  sku_code: '$product_variants.sku_code',
+                  slug: '$product_variants.slug',
+                  price: '$product_variants.price',
+                  discount_details: '$product_variants.discount_details',
+                  calculated_discount_price: '$product_variants.calculated_discount_price',
+                  stock_quantity: '$product_variants.stock_quantity',
+                  low_stock_threshold: '$product_variants.low_stock_threshold',
+                  weight: '$product_variants.weight',
+                  dimensions: '$product_variants.dimensions',
+                  images: '$product_variants.images',
+                  option_values: '$product_variants.option_values',
+                  is_active: '$product_variants.is_active',
+                  createdAt: '$product_variants.createdAt',
+                  updatedAt: '$product_variants.updatedAt'
+                },
+                else: '$$REMOVE'
+              }
+            }
+          }
+        }
+      },
+
+      // Stage 7: Clean up null/undefined min_discounted_price values and empty variants arrays
+      {
+        $addFields: {
+          min_discounted_price: {
+            $cond: {
+              if: { 
+                $or: [
+                  { $eq: ['$min_discounted_price', null] },
+                  { $eq: [{ $type: '$min_discounted_price' }, 'missing'] }
+                ]
+              },
+              then: null,
+              else: '$min_discounted_price'
+            }
+          },
+          variants: {
+            $cond: {
+              if: { $eq: [{ $size: '$variants' }, 0] },
+              then: [],
+              else: '$variants'
+            }
+          }
+        }
+      },
+
+      // Stage 8: Lookup category details for populated response
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'category_id',
+          foreignField: '_id',
+          as: 'category_id'
+        }
+      },
+
+      // Stage 9: Unwind category (should always exist due to required field)
+      {
+        $unwind: {
+          path: '$category_id',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+
+      // Stage 10: Project only needed category fields
+      {
+        $addFields: {
+          'category_id': {
+            _id: '$category_id._id',
+            name: '$category_id.name',
+            slug: '$category_id.slug'
+          }
+        }
+      },
+
+      // Stage 11: Lookup brand details for populated response
+      {
+        $lookup: {
+          from: 'brands',
+          localField: 'brand_id',
+          foreignField: '_id',
+          as: 'brand_id'
+        }
+      },
+
+      // Stage 12: Unwind brand (may not exist for all products)
+      {
+        $unwind: {
+          path: '$brand_id',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+
+      // Stage 13: Project only needed brand fields
+      {
+        $addFields: {
+          'brand_id': {
+            $cond: {
+              if: { $eq: ['$brand_id', null] },
+              then: null,
+              else: {
+                _id: '$brand_id._id',
+                name: '$brand_id.name',
+                slug: '$brand_id.slug',
+                logo_url: '$brand_id.logo_url',
+                website: '$brand_id.website'
+              }
+            }
+          }
+        }
+      }
+    ];
+
+    // Execute aggregation
+    const [product] = await Product.aggregate(aggregationPipeline);
 
     if (!product) {
       return res.status(404).json({
@@ -467,6 +1039,12 @@ const updateProduct = async (req, res, next) => {
     });
 
     const updatedProduct = await product.save();
+
+    // Populate referenced fields for response
+    await updatedProduct.populate([
+      { path: 'category_id', select: 'name slug description' },
+      { path: 'brand_id', select: 'name slug description logo_url website' }
+    ]);
 
     // Log admin action with changes
     const changes = {};
@@ -1463,6 +2041,367 @@ const getContentOptimization = async (req, res, next) => {
   }
 };
 
+/**
+ * Get featured products for homepage
+ * @route GET /api/v1/products/featured
+ * @access Public
+ */
+const getFeaturedProducts = async (req, res, next) => {
+  try {
+    const { limit = 8 } = req.query;
+    const limitNum = Math.min(parseInt(limit) || 8, 20); // Max 20 products
+
+    // Build match query for featured products
+    const matchQuery = {
+      is_active: true,
+      score: { $gte: 3.5 }, // Products with score 3.5 or higher
+      average_rating: { $gte: 4.0 } // Products with rating 4.0 or higher
+    };
+
+    // Build sort object
+    const sortObj = { score: -1, average_rating: -1, reviews_count: -1 };
+
+    // Create aggregation pipeline with variants
+    const pipeline = createProductsWithVariantsPipeline(matchQuery, sortObj, limitNum);
+
+    // Execute aggregation
+    const featuredProducts = await Product.aggregate(pipeline);
+
+    res.status(200).json({
+      success: true,
+      message: 'Featured products retrieved successfully',
+      count: featuredProducts.length,
+      data: featuredProducts
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get best selling products for homepage
+ * @route GET /api/v1/products/bestsellers
+ * @access Public
+ */
+const getBestSellers = async (req, res, next) => {
+  try {
+    const { limit = 8, period = 30 } = req.query;
+    const limitNum = Math.min(parseInt(limit) || 8, 20);
+    const periodDays = Math.min(parseInt(period) || 30, 365);
+    
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - periodDays);
+
+    // Build match query for bestsellers
+    const matchQuery = {
+      is_active: true,
+      reviews_count: { $gte: 5 }, // Products with at least 5 reviews
+      createdAt: { $gte: startDate }
+    };
+
+    // Build sort object
+    const sortObj = { reviews_count: -1, average_rating: -1, score: -1 };
+
+    // Create aggregation pipeline with variants
+    const pipeline = createProductsWithVariantsPipeline(matchQuery, sortObj, limitNum);
+
+    // Execute aggregation
+    const bestSellers = await Product.aggregate(pipeline);
+
+    res.status(200).json({
+      success: true,
+      message: 'Best selling products retrieved successfully',
+      count: bestSellers.length,
+      data: bestSellers
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get products on deal/sale for homepage
+ * @route GET /api/v1/products/deals
+ * @access Public
+ */
+const getDealsProducts = async (req, res, next) => {
+  try {
+    const { limit = 8 } = req.query;
+    const limitNum = Math.min(parseInt(limit) || 8, 20);
+
+    // Build match query for deals products
+    const matchQuery = {
+      is_active: true,
+      score: { $gte: 3.0 } // Decent quality products
+      // Add actual deal/discount fields when available
+      // discount_percentage: { $gt: 0 },
+      // deal_active: true
+    };
+
+    // Build sort object
+    const sortObj = { score: -1, createdAt: -1 };
+
+    // Create aggregation pipeline with variants
+    const pipeline = createProductsWithVariantsPipeline(matchQuery, sortObj, limitNum);
+
+    // Execute aggregation
+    const dealsProducts = await Product.aggregate(pipeline);
+
+    res.status(200).json({
+      success: true,
+      message: 'Deal products retrieved successfully',
+      count: dealsProducts.length,
+      data: dealsProducts
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get new/latest products for homepage
+ * @route GET /api/v1/products/new
+ * @access Public
+ */
+const getNewProducts = async (req, res, next) => {
+  try {
+    const { limit = 8, days = 30 } = req.query;
+    const limitNum = Math.min(parseInt(limit) || 8, 20);
+    const daysPeriod = Math.min(parseInt(days) || 30, 90);
+    
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - daysPeriod);
+
+    // Build match query for new products
+    const matchQuery = {
+      is_active: true,
+      createdAt: { $gte: startDate }
+    };
+
+    // Build sort object
+    const sortObj = { createdAt: -1, score: -1 };
+
+    // Create aggregation pipeline with variants
+    const pipeline = createProductsWithVariantsPipeline(matchQuery, sortObj, limitNum);
+
+    // Execute aggregation
+    const newProducts = await Product.aggregate(pipeline);
+
+    res.status(200).json({
+      success: true,
+      message: 'New products retrieved successfully',
+      count: newProducts.length,
+      data: newProducts
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get trending products for homepage
+ * @route GET /api/v1/products/trending
+ * @access Public
+ */
+const getTrendingProducts = async (req, res, next) => {
+  try {
+    const { limit = 8 } = req.query;
+    const limitNum = Math.min(parseInt(limit) || 8, 20);
+
+    // Calculate trending based on recent activity (reviews, ratings)
+    const recentDate = new Date();
+    recentDate.setDate(recentDate.getDate() - 7); // Last 7 days
+
+    // Build match query for trending products
+    const matchQuery = {
+      is_active: true,
+      updatedAt: { $gte: recentDate }, // Recently updated products
+      average_rating: { $gte: 3.0 }
+    };
+
+    // Build sort object
+    const sortObj = { 
+      reviews_count: -1, 
+      average_rating: -1, 
+      updatedAt: -1 
+    };
+
+    // Create aggregation pipeline with variants
+    const pipeline = createProductsWithVariantsPipeline(matchQuery, sortObj, limitNum);
+
+    // Execute aggregation
+    const trendingProducts = await Product.aggregate(pipeline);
+
+    res.status(200).json({
+      success: true,
+      message: 'Trending products retrieved successfully',
+      count: trendingProducts.length,
+      data: trendingProducts
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get recommended products for homepage
+ * @route GET /api/v1/products/recommended
+ * @access Public
+ */
+const getRecommendedProducts = async (req, res, next) => {
+  try {
+    const { limit = 8, category } = req.query;
+    const limitNum = Math.min(parseInt(limit) || 8, 20);
+
+    // Build match query for recommended products
+    let matchQuery = {
+      is_active: true,
+      average_rating: { $gte: 3.5 }
+    };
+
+    // Filter by category if provided
+    if (category) {
+      matchQuery.category_id = new mongoose.Types.ObjectId(category);
+    }
+
+    // Build sort object
+    const sortObj = { 
+      average_rating: -1,
+      reviews_count: -1,
+      score: -1
+    };
+
+    // Create aggregation pipeline with variants
+    const pipeline = createProductsWithVariantsPipeline(matchQuery, sortObj, limitNum);
+
+    // Execute aggregation
+    const recommendedProducts = await Product.aggregate(pipeline);
+
+    res.status(200).json({
+      success: true,
+      message: 'Recommended products retrieved successfully',
+      count: recommendedProducts.length,
+      data: recommendedProducts
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get homepage data (all sections in one call)
+ * @route GET /api/v1/products/homepage
+ * @access Public
+ */
+const getHomepageData = async (req, res, next) => {
+  try {
+    const { limit = 8 } = req.query;
+    const limitNum = Math.min(parseInt(limit) || 8, 20);
+
+    // Get all homepage sections concurrently
+    const [featured, bestsellers, deals, newProducts, trending] = await Promise.all([
+      // Featured products
+      Product.find({
+        is_active: true,
+        score: { $gte: 3.5 },
+        average_rating: { $gte: 4.0 }
+      })
+      .populate('category_id', 'name slug')
+      .populate('brand_id', 'name slug logo_url')
+      .sort({ score: -1, average_rating: -1 })
+      .limit(limitNum)
+      .lean(),
+
+      // Best sellers
+      Product.find({
+        is_active: true,
+        reviews_count: { $gte: 5 }
+      })
+      .populate('category_id', 'name slug')
+      .populate('brand_id', 'name slug logo_url')
+      .sort({ reviews_count: -1, average_rating: -1 })
+      .limit(limitNum)
+      .lean(),
+
+      // Deals
+      Product.find({
+        is_active: true,
+        score: { $gte: 3.0 }
+      })
+      .populate('category_id', 'name slug')
+      .populate('brand_id', 'name slug logo_url')
+      .sort({ score: -1, createdAt: -1 })
+      .limit(limitNum)
+      .lean(),
+
+      // New products (last 30 days)
+      Product.find({
+        is_active: true,
+        createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
+      })
+      .populate('category_id', 'name slug')
+      .populate('brand_id', 'name slug logo_url')
+      .sort({ createdAt: -1 })
+      .limit(limitNum)
+      .lean(),
+
+      // Trending products
+      Product.find({
+        is_active: true,
+        updatedAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+        average_rating: { $gte: 3.0 }
+      })
+      .populate('category_id', 'name slug')
+      .populate('brand_id', 'name slug logo_url')
+      .sort({ reviews_count: -1, average_rating: -1 })
+      .limit(limitNum)
+      .lean()
+    ]);
+
+    res.status(200).json({
+      success: true,
+      message: 'Homepage data retrieved successfully',
+      data: {
+        featured: {
+          title: 'Featured Products',
+          products: featured,
+          count: featured.length
+        },
+        bestsellers: {
+          title: 'Best Sellers',
+          products: bestsellers,
+          count: bestsellers.length
+        },
+        deals: {
+          title: 'Special Deals',
+          products: deals,
+          count: deals.length
+        },
+        new: {
+          title: 'New Arrivals',
+          products: newProducts,
+          count: newProducts.length
+        },
+        trending: {
+          title: 'Trending Now',
+          products: trending,
+          count: trending.length
+        }
+      }
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Export all functions at the end after they are defined
 module.exports = {
   createProduct,
   getAllProducts,
@@ -1476,5 +2415,12 @@ module.exports = {
   getLowPerformingProducts,
   getCatalogHealthReport,
   getCategoryComparison,
-  getContentOptimization
+  getContentOptimization,
+  getFeaturedProducts,
+  getBestSellers,
+  getDealsProducts,
+  getNewProducts,
+  getTrendingProducts,
+  getRecommendedProducts,
+  getHomepageData
 };

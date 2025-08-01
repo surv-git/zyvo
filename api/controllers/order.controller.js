@@ -17,15 +17,56 @@ const userAuditLogger = require('../middleware/userAuditLogger');
 const adminAuditLogger = require('../loggers/adminAudit.logger');
 const mongoose = require('mongoose');
 
+// Helper function to execute operations with optional transaction support
+const executeWithOptionalTransaction = async (operation) => {
+  // Check if transactions are supported
+  const supportsTransactions = await checkTransactionSupport();
+  
+  if (!supportsTransactions) {
+    // Execute without transaction
+    return await operation();
+  }
+  
+  // Execute with transaction
+  const session = await mongoose.startSession();
+  try {
+    let result;
+    await session.withTransaction(async () => {
+      result = await operation(session);
+    });
+    return result;
+  } finally {
+    await session.endSession();
+  }
+};
+
+// Check if MongoDB instance supports transactions
+const checkTransactionSupport = async () => {
+  try {
+    // In test environment, skip transactions
+    if (process.env.NODE_ENV === 'test') {
+      return false;
+    }
+    
+    // Check if we're connected to a replica set or sharded cluster
+    const admin = mongoose.connection.db.admin();
+    const result = await admin.command({ isMaster: 1 });
+    
+    // Transactions are supported on replica sets and sharded clusters
+    return result.setName || result.msg === 'isdbgrid';
+  } catch (error) {
+    console.warn('Could not check transaction support, assuming standalone MongoDB:', error.message);
+    return false;
+  }
+};
+
 /**
  * Place order from cart
  * POST /api/v1/user/orders
  */
 const placeOrder = async (req, res) => {
-  const session = await mongoose.startSession();
-  
   try {
-    await session.withTransaction(async () => {
+    const result = await executeWithOptionalTransaction(async (session) => {
       const userId = req.user.id;
       const { shipping_address, billing_address, payment_method_id, is_cod = false } = req.body;
       
@@ -178,12 +219,13 @@ const placeOrder = async (req, res) => {
         payment_method: is_cod ? 'COD' : 'ONLINE',
         applied_coupon: cart.applied_coupon_code
       });
+      
+      // Return the order ID for fetching complete data
+      return order._id;
     });
     
     // Get the created order with items
-    const orderData = await Order.getOrderWithItems(
-      await Order.findOne({ user_id: req.user.id }).sort({ createdAt: -1 }).select('_id')
-    );
+    const orderData = await Order.getOrderWithItems(result);
     
     res.status(201).json({
       success: true,
@@ -204,8 +246,6 @@ const placeOrder = async (req, res) => {
       message: error.message || 'Failed to place order',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Bad request'
     });
-  } finally {
-    await session.endSession();
   }
 };
 

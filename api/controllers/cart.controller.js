@@ -15,11 +15,15 @@ const mongoose = require('mongoose');
 
 // Helper function to execute with or without transactions based on environment
 const executeWithOptionalTransaction = async (operation) => {
-  // In test environment or standalone MongoDB, skip transactions
-  if (process.env.NODE_ENV === 'test' || !mongoose.connection.db.admin) {
+  // Check if transactions are supported
+  const supportsTransactions = await checkTransactionSupport();
+  
+  if (!supportsTransactions) {
+    // Execute without transaction
     return await operation();
   }
   
+  // Execute with transaction
   const session = await mongoose.startSession();
   try {
     let result;
@@ -29,6 +33,26 @@ const executeWithOptionalTransaction = async (operation) => {
     return result;
   } finally {
     await session.endSession();
+  }
+};
+
+// Check if MongoDB instance supports transactions
+const checkTransactionSupport = async () => {
+  try {
+    // In test environment, skip transactions
+    if (process.env.NODE_ENV === 'test') {
+      return false;
+    }
+    
+    // Check if we're connected to a replica set or sharded cluster
+    const admin = mongoose.connection.db.admin();
+    const result = await admin.command({ isMaster: 1 });
+    
+    // Transactions are supported on replica sets and sharded clusters
+    return result.setName || result.msg === 'isdbgrid';
+  } catch (error) {
+    console.warn('Could not check transaction support, assuming standalone MongoDB:', error.message);
+    return false;
   }
 };
 
@@ -189,19 +213,20 @@ const addItemToCart = async (req, res) => {
  * PATCH /api/v1/user/cart/items/:productVariantId
  */
 const updateCartItemQuantity = async (req, res) => {
-  const session = await mongoose.startSession();
-  
   try {
-    await session.withTransaction(async () => {
-      const userId = req.user.id;
-      const { productVariantId } = req.params;
-      const { quantity } = req.body;
-      
-      // Validate input
-      if (!Number.isInteger(quantity) || quantity < 0) {
-        throw new Error('Quantity must be a non-negative integer');
-      }
-      
+    const userId = req.user.id;
+    const { productVariantId } = req.params;
+    const { quantity } = req.body;
+    
+    // Validate input
+    if (!Number.isInteger(quantity) || quantity < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Quantity must be a non-negative integer'
+      });
+    }
+    
+    await executeWithOptionalTransaction(async (session) => {
       // Find user's cart
       const cart = await Cart.findOne({ user_id: userId });
       if (!cart) {
@@ -216,7 +241,7 @@ const updateCartItemQuantity = async (req, res) => {
       
       if (quantity === 0) {
         // Remove item from cart
-        await CartItem.deleteOne({ _id: cartItem._id }, { session });
+        await CartItem.deleteOne({ _id: cartItem._id }, session ? { session } : undefined);
       } else {
         // Check inventory for new quantity
         const { base_unit_variant_id, pack_unit_multiplier } = await getVariantPackDetails(productVariantId);
@@ -230,12 +255,12 @@ const updateCartItemQuantity = async (req, res) => {
         
         // Update quantity
         cartItem.quantity = quantity;
-        await cartItem.save({ session });
+        await cartItem.save(session ? { session } : undefined);
       }
       
       // Recalculate cart total
       await cart.calculateTotal();
-      await cart.save({ session });
+      await cart.save(session ? { session } : undefined);
       
       userAuditLogger.logActivity(userId, 'CART_ITEM_QUANTITY_UPDATED', {
         cart_id: cart._id,
@@ -261,8 +286,6 @@ const updateCartItemQuantity = async (req, res) => {
       message: error.message || 'Failed to update cart item quantity',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Bad request'
     });
-  } finally {
-    await session.endSession();
   }
 };
 
@@ -271,13 +294,11 @@ const updateCartItemQuantity = async (req, res) => {
  * DELETE /api/v1/user/cart/items/:productVariantId
  */
 const removeItemFromCart = async (req, res) => {
-  const session = await mongoose.startSession();
-  
   try {
-    await session.withTransaction(async () => {
-      const userId = req.user.id;
-      const { productVariantId } = req.params;
-      
+    const userId = req.user.id;
+    const { productVariantId } = req.params;
+    
+    await executeWithOptionalTransaction(async (session) => {
       // Find user's cart
       const cart = await Cart.findOne({ user_id: userId });
       if (!cart) {
@@ -290,11 +311,11 @@ const removeItemFromCart = async (req, res) => {
         throw new Error('Item not found in cart');
       }
       
-      await CartItem.deleteOne({ _id: cartItem._id }, { session });
+      await CartItem.deleteOne({ _id: cartItem._id }, session ? { session } : undefined);
       
       // Recalculate cart total
       await cart.calculateTotal();
-      await cart.save({ session });
+      await cart.save(session ? { session } : undefined);
       
       userAuditLogger.logActivity(userId, 'ITEM_REMOVED_FROM_CART', {
         cart_id: cart._id,
@@ -319,8 +340,6 @@ const removeItemFromCart = async (req, res) => {
       message: error.message || 'Failed to remove item from cart',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Bad request'
     });
-  } finally {
-    await session.endSession();
   }
 };
 
@@ -329,16 +348,18 @@ const removeItemFromCart = async (req, res) => {
  * POST /api/v1/user/cart/apply-coupon
  */
 const applyCouponToCart = async (req, res) => {
-  const session = await mongoose.startSession();
-  
   try {
-    await session.withTransaction(async () => {
-      const userId = req.user.id;
-      const { coupon_code } = req.body;
-      
-      if (!coupon_code) {
-        throw new Error('Coupon code is required');
-      }
+    const userId = req.user.id;
+    const { coupon_code } = req.body;
+    
+    if (!coupon_code) {
+      return res.status(400).json({
+        success: false,
+        message: 'Coupon code is required'
+      });
+    }
+    
+    await executeWithOptionalTransaction(async (session) => {
       
       // Find user's cart
       const cart = await Cart.findOne({ user_id: userId });
@@ -401,7 +422,7 @@ const applyCouponToCart = async (req, res) => {
       // Apply coupon to cart
       cart.applyCoupon(coupon_code.toUpperCase(), discountAmount);
       await cart.calculateTotal();
-      await cart.save({ session });
+      await cart.save(session ? { session } : undefined);
       
       userAuditLogger.logActivity(userId, 'COUPON_APPLIED_TO_CART', {
         cart_id: cart._id,
@@ -428,8 +449,6 @@ const applyCouponToCart = async (req, res) => {
       message: error.message || 'Failed to apply coupon',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Bad request'
     });
-  } finally {
-    await session.endSession();
   }
 };
 
@@ -438,12 +457,10 @@ const applyCouponToCart = async (req, res) => {
  * DELETE /api/v1/user/cart/remove-coupon
  */
 const removeCouponFromCart = async (req, res) => {
-  const session = await mongoose.startSession();
-  
   try {
-    await session.withTransaction(async () => {
-      const userId = req.user.id;
-      
+    const userId = req.user.id;
+    
+    await executeWithOptionalTransaction(async (session) => {
       // Find user's cart
       const cart = await Cart.findOne({ user_id: userId });
       if (!cart) {
@@ -455,7 +472,7 @@ const removeCouponFromCart = async (req, res) => {
       // Remove coupon
       cart.clearCoupon();
       await cart.calculateTotal();
-      await cart.save({ session });
+      await cart.save(session ? { session } : undefined);
       
       userAuditLogger.logActivity(userId, 'COUPON_REMOVED_FROM_CART', {
         cart_id: cart._id,
@@ -480,8 +497,6 @@ const removeCouponFromCart = async (req, res) => {
       message: error.message || 'Failed to remove coupon',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Bad request'
     });
-  } finally {
-    await session.endSession();
   }
 };
 

@@ -6,34 +6,27 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    
     "test": "jest --config=jest.config.new.js",
     "test:watch": "jest --config=jest.config.new.js --watch",
     "test:coverage": "jest --config=jest.config.new.js --coverage",
-    
     "test:unit": "jest --config=jest.config.new.js --selectProjects=unit",
     "test:unit:controllers": "jest --config=jest.config.new.js --selectProjects=unit tests/unit/controllers",
     "test:unit:models": "jest --config=jest.config.new.js --selectProjects=unit tests/unit/models",
     "test:unit:utils": "jest --config=jest.config.new.js --selectProjects=unit tests/unit/utils",
     "test:unit:coverage": "jest --config=jest.config.new.js --selectProjects=unit --coverage",
-    
     "test:integration": "jest --config=jest.config.new.js --selectProjects=integration",
     "test:integration:api": "jest --config=jest.config.new.js --selectProjects=integration tests/integration/api",
     "test:integration:database": "jest --config=jest.config.new.js --selectProjects=integration tests/integration/database",
-    
     "test:performance": "jest --config=jest.config.new.js --selectProjects=performance",
     "test:e2e": "jest --config=jest.config.new.js --selectProjects=e2e",
-    
     "test:controller": "jest --config=jest.config.new.js --selectProjects=unit tests/unit/controllers",
     "test:favorites": "jest --config=jest.config.new.js tests/**/favorite*.test.js",
     "test:cart": "jest --config=jest.config.new.js tests/**/cart*.test.js",
     "test:order": "jest --config=jest.config.new.js tests/**/order*.test.js",
     "test:reviews": "jest --config=jest.config.new.js tests/**/productReview*.test.js",
-    
     "test:old": "jest --config=jest.config.js",
     "test:100-pass": "jest --config=jest.config.100-pass.js",
     "test:100-pass:coverage": "jest --config=jest.config.100-pass.js --coverage",
-    
     "docs:generate": "node scripts/generateDocs.js",
     "docs:serve": "npx @redocly/cli preview-docs docs/openapi.yaml",
     "docs:full": "npm run docs:generate",
@@ -82,10 +75,13 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^7.4.0",
     "morgan": "^1.10.0",
+    "node-fetch": "^2.7.0",
     "nodemailer": "^6.10.1",
+    "razorpay": "^2.9.6",
     "slugify": "^1.6.6",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0",
+    "unsplash-js": "^7.0.19",
     "winston": "^3.17.0",
     "winston-daily-rotate-file": "^5.0.0"
   },

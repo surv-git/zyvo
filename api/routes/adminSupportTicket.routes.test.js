@@ -92,7 +92,7 @@ router.put(
   '/:id/assign',
   authMiddleware,
   requireAdmin,
-  adminSupportTicketController.assignTicket
+  adminSupportTicketController.assignSupportTicket
 );
 
 /**
@@ -104,7 +104,7 @@ router.put(
   '/:id/status',
   authMiddleware,
   requireAdmin,
-  adminSupportTicketController.updateTicketStatus
+  adminSupportTicketController.updateSupportTicket
 );
 
 /**
@@ -140,7 +140,7 @@ router.put(
   '/:id/escalate',
   authMiddleware,
   requireAdmin,
-  adminSupportTicketController.escalateTicket
+  adminSupportTicketController.escalateSupportTicket
 );
 
 /**
@@ -164,7 +164,7 @@ router.put(
   '/bulk/status',
   authMiddleware,
   requireAdmin,
-  adminSupportTicketController.bulkUpdateStatus
+  adminSupportTicketController.bulkUpdateTickets
 );
 
 /**
@@ -176,7 +176,7 @@ router.put(
   '/bulk/assign',
   authMiddleware,
   requireAdmin,
-  adminSupportTicketController.bulkAssignTickets
+  adminSupportTicketController.bulkUpdateTickets
 );
 
 module.exports = router;

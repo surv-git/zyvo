@@ -204,6 +204,10 @@ orderItemSchema.statics.createFromCartItems = async function(orderId, cartItems)
       option_value: opt.option_value || 'Unknown'
     })) || [];
     
+    // Calculate subtotal
+    const price = variant.current_price || cartItem.price_at_addition;
+    const subtotal = cartItem.quantity * price;
+    
     // Create order item
     const orderItem = new this({
       order_id: orderId,
@@ -212,7 +216,8 @@ orderItemSchema.statics.createFromCartItems = async function(orderId, cartItems)
       product_name: variant.product_id?.name || 'Unknown Product',
       variant_options: variantOptions,
       quantity: cartItem.quantity,
-      price: variant.current_price || cartItem.price_at_addition
+      price: price,
+      subtotal: subtotal
     });
     
     orderItems.push(orderItem);

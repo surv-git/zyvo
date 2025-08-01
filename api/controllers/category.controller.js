@@ -8,6 +8,7 @@ const { validationResult } = require('express-validator');
 const Category = require('../models/Category');
 const userActivityLogger = require('../loggers/userActivity.logger');
 const adminAuditLogger = require('../loggers/adminAudit.logger');
+const unsplashService = require('../services/unsplash.service');
 
 /**
  * Create a new category
@@ -49,12 +50,29 @@ const createCategory = async (req, res, next) => {
       }
     }
 
+    // Auto-fetch image from Unsplash if none provided
+    let categoryImageUrl = image_url?.trim();
+    
+    if ((!image_url || image_url.trim() === '') && unsplashService.isReady()) {
+      try {
+        // Fetch hero image from Unsplash
+        const unsplashImage = await unsplashService.getCategoryHeroImage(name);
+        if (unsplashImage) {
+          categoryImageUrl = unsplashImage;
+          console.log(`✅ Auto-fetched image for category: ${name}`);
+        }
+      } catch (error) {
+        console.warn('⚠️  Failed to fetch Unsplash image for category:', error.message);
+        // Continue with empty image_url - don't fail category creation
+      }
+    }
+
     // Create new category
     const category = new Category({
       name: name.trim(),
       description: description?.trim(),
       parent_category: parent_category || null,
-      image_url: image_url?.trim()
+      image_url: categoryImageUrl
     });
 
     await category.save();

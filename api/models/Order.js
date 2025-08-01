@@ -74,7 +74,7 @@ const orderSchema = new mongoose.Schema({
   order_number: {
     type: String,
     unique: true,
-    required: [true, 'Order number is required'],
+    required: false, // Generated automatically by pre-save middleware
     trim: true,
     uppercase: true,
     index: true
@@ -106,6 +106,78 @@ const orderSchema = new mongoose.Schema({
     },
     default: 'PENDING',
     index: true
+  },
+  
+  // Payment Gateway Information
+  payment_gateway: {
+    type: String,
+    enum: {
+      values: ['COD', 'RAZORPAY', 'WALLET', 'UPI', 'NETBANKING', 'CARD'],
+      message: 'Payment gateway must be one of: COD, RAZORPAY, WALLET, UPI, NETBANKING, CARD'
+    },
+    default: 'COD',
+    index: true
+  },
+  
+  // Razorpay specific fields
+  razorpay_order_id: {
+    type: String,
+    trim: true,
+    default: null,
+    index: true
+  },
+  
+  razorpay_payment_id: {
+    type: String,
+    trim: true,
+    default: null,
+    index: true
+  },
+  
+  razorpay_signature: {
+    type: String,
+    trim: true,
+    default: null
+  },
+  
+  // Payment transaction details
+  payment_transaction_id: {
+    type: String,
+    trim: true,
+    default: null,
+    index: true
+  },
+  
+  payment_method_details: {
+    type: {
+      method: {
+        type: String,
+        enum: ['card', 'netbanking', 'wallet', 'upi', 'emi', 'paylater'],
+        default: null
+      },
+      bank: {
+        type: String,
+        default: null
+      },
+      wallet: {
+        type: String,
+        default: null
+      },
+      vpa: {
+        type: String,
+        default: null
+      },
+      card_network: {
+        type: String,
+        default: null
+      },
+      card_type: {
+        type: String,
+        enum: ['credit', 'debit', 'prepaid'],
+        default: null
+      }
+    },
+    default: null
   },
   
   // Order Status
@@ -154,7 +226,7 @@ const orderSchema = new mongoose.Schema({
   
   grand_total_amount: {
     type: Number,
-    required: [true, 'Grand total amount is required'],
+    required: false, // Calculated automatically by pre-save middleware
     min: [0, 'Grand total amount cannot be negative']
   },
   

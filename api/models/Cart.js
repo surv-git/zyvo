@@ -149,15 +149,15 @@ cartSchema.statics.getCartWithItems = async function(userId) {
           select: 'name description brand_id category_id'
         },
         {
-          path: 'option_values.option_id',
-          select: 'name'
+          path: 'option_values',
+          select: 'option_type name option_value'
         }
       ]
     })
     .sort({ added_at: 1 });
   
   return {
-    cart: cart.toObject(),
+    cart: cart,
     items: cartItems
   };
 };

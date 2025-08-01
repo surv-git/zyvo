@@ -10,12 +10,28 @@ const mongoose = require('mongoose');
  * Validation for adding a favorite
  */
 const validateAddFavorite = [
+  // Custom validation to ensure either product_variant_id or product_id is provided
+  body().custom((body) => {
+    if (!body.product_variant_id && !body.product_id) {
+      throw new Error('Either product_variant_id or product_id is required');
+    }
+    return true;
+  }),
+  
   body('product_variant_id')
-    .notEmpty()
-    .withMessage('Product variant ID is required')
+    .optional()
     .custom((value) => {
-      if (!mongoose.Types.ObjectId.isValid(value)) {
+      if (value && !mongoose.Types.ObjectId.isValid(value)) {
         throw new Error('Invalid product variant ID format');
+      }
+      return true;
+    }),
+    
+  body('product_id')
+    .optional()
+    .custom((value) => {
+      if (value && !mongoose.Types.ObjectId.isValid(value)) {
+        throw new Error('Invalid product ID format');
       }
       return true;
     }),
@@ -57,6 +73,25 @@ const validateProductVariantId = [
       }
       return true;
     })
+];
+
+/**
+ * Validation for generic ID parameter (product_id or product_variant_id)
+ * Used in DELETE endpoint that accepts both types
+ */
+const validateGenericId = [
+  param('id')
+    .custom((value) => {
+      if (!mongoose.Types.ObjectId.isValid(value)) {
+        throw new Error('Invalid ID format');
+      }
+      return true;
+    }),
+    
+  query('type')
+    .optional()
+    .isIn(['product', 'variant'])
+    .withMessage('Type must be either "product" or "variant"')
 ];
 
 /**
@@ -214,6 +249,7 @@ module.exports = {
   validateAddFavorite,
   validateUpdateFavoriteNotes,
   validateProductVariantId,
+  validateGenericId,
   validateFavoritesQuery,
   validateBulkAddFavorites,
   validatePopularQuery,

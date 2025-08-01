@@ -15,7 +15,15 @@ const {
   getProductByIdOrSlug,
   updateProduct,
   deleteProduct,
-  getProductStats
+  getProductStats,
+  // Homepage endpoints
+  getFeaturedProducts,
+  getBestSellers,
+  getDealsProducts,
+  getNewProducts,
+  getTrendingProducts,
+  getRecommendedProducts,
+  getHomepageData
 } = require('../controllers/product.controller');
 
 // Import middleware
@@ -151,12 +159,32 @@ const validatePagination = [
     .withMessage('Limit must be between 1 and 100'),
   query('category_id')
     .optional()
-    .isMongoId()
-    .withMessage('Category ID must be a valid MongoDB ObjectId'),
+    .custom((value) => {
+      // Handle single or multiple category IDs
+      const ids = Array.isArray(value) ? value : value.split(',');
+      for (const id of ids) {
+        const trimmedId = id.trim();
+        if (!trimmedId.match(/^[0-9a-fA-F]{24}$/)) {
+          throw new Error(`Invalid category ID format: ${trimmedId}`);
+        }
+      }
+      return true;
+    })
+    .withMessage('Category ID(s) must be valid MongoDB ObjectId(s)'),
   query('brand_id')
     .optional()
-    .isMongoId()
-    .withMessage('Brand ID must be a valid MongoDB ObjectId'),
+    .custom((value) => {
+      // Handle single or multiple brand IDs
+      const ids = Array.isArray(value) ? value : value.split(',');
+      for (const id of ids) {
+        const trimmedId = id.trim();
+        if (!trimmedId.match(/^[0-9a-fA-F]{24}$/)) {
+          throw new Error(`Invalid brand ID format: ${trimmedId}`);
+        }
+      }
+      return true;
+    })
+    .withMessage('Brand ID(s) must be valid MongoDB ObjectId(s)'),
   query('search')
     .optional()
     .trim()
@@ -443,12 +471,14 @@ router.post('/', adminAuthMiddleware, validateProduct, createProduct);
  *         name: category_id
  *         schema:
  *           type: string
- *         description: Filter by category ID
+ *         description: Filter by category ID(s). Supports single ID or comma-separated multiple IDs
+ *         example: "507f1f77bcf86cd799439011" or "507f1f77bcf86cd799439011,507f1f77bcf86cd799439012"
  *       - in: query
  *         name: brand_id
  *         schema:
  *           type: string
- *         description: Filter by brand ID
+ *         description: Filter by brand ID(s). Supports single ID or comma-separated multiple IDs
+ *         example: "507f1f77bcf86cd799439013" or "507f1f77bcf86cd799439013,507f1f77bcf86cd799439014"
  *       - in: query
  *         name: search
  *         schema:
@@ -510,6 +540,15 @@ router.get('/', validatePagination, getAllProducts);
  *         description: Forbidden - Admin access required
  */
 router.get('/stats', adminAuthMiddleware, getProductStats);
+
+// Homepage endpoints (must be before /:identifier route)
+router.get('/featured', getFeaturedProducts);
+router.get('/bestsellers', getBestSellers);
+router.get('/deals', getDealsProducts);
+router.get('/new', getNewProducts);
+router.get('/trending', getTrendingProducts);
+router.get('/recommended', getRecommendedProducts);
+router.get('/homepage', getHomepageData);
 
 /**
  * @swagger
